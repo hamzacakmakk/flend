@@ -1,7 +1,5 @@
 # Nurullah Turgut'un Gereksinimleri 
 
-## Dashboard, Analitik ve Bildirim Sorumlusu (Analytics & Alerts)
-Satış hızını, istatistikleri ve acil durum uyarılarını yönetir.
 
 1. **Özet İstatistik Görüntüleme**
    - **Türü:** GET (Read)
