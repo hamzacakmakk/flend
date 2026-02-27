@@ -1,7 +1,6 @@
-# Mehmet'in Gereksinimleri (Entegrasyon ve Envanter Sorumlusu)
+# Mehmet'in Gereksinimleri
 
-## Entegrasyon ve Envanter Sorumlusu (Integration & Inventory)
-Satıcının Trendyol/Amazon vb. mağazasını sisteme bağlaması ve kendi ürünlerini yönetmesiyle ilgilenir.
+
 
 1. **Pazaryeri Entegrasyonu Ekleme**
    - **Türü:** POST (Create)
