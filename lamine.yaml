@@ -1,0 +1,589 @@
+openapi: 3.0.3
+info:
+  title: Flend API
+  description: |
+    E-ticaret pazaryerlerinde satış yapan firmalar için otomatik rekabet ve kâr optimizasyonu B2B SaaS platformu RESTful API'si.
+    
+    ## Özellikler
+    - Kullanıcı ve Abonelik Yönetimi
+    - Pazaryeri Entegrasyonu ve Envanter Yönetimi
+    - Rakip Takibi ve Scraper Yönetimi
+    - Dinamik Fiyatlandırma Kuralları
+    - Analitik, Dashboard ve Bildirimler
+    - JWT tabanlı kimlik doğrulama
+  version: 1.0.0
+  contact:
+    name: Flend Destek Ekibi
+    email: api-support@flend.com
+    url: https://api.flend.com/support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.flend.com/v1
+    description: Production server
+  - url: https://staging-api.flend.com/v1
+    description: Staging server
+  - url: http://localhost:3000/v1
+    description: Development server
+
+tags:
+  - name: auth
+    description: Kimlik doğrulama, satıcı girişi ve kayıt işlemleri
+  - name: users
+    description: Satıcı profili ve abonelik yönetimi
+  - name: integrations
+    description: Trendyol, Amazon vb. pazaryeri API entegrasyonları
+  - name: inventory
+    description: Kendi mağaza ürünlerinin ve taban fiyatlarının yönetimi
+  - name: competitors
+    description: Rakip ürün linkleme, fiyat logları ve bot senkronizasyonu
+  - name: pricing-rules
+    description: Dinamik fiyatlandırma kural motoru işlemleri
+  - name: analytics
+    description: Dashboard istatistikleri ve stok/kampanya önerileri
+  - name: notifications
+    description: Alarm kuralları ve sistem bildirimleri
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - auth
+      summary: Yeni satıcı hesabı oluşturma
+      description: Sisteme yeni bir e-ticaret satıcısı kaydeder
+      operationId: registerMerchant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MerchantRegistration'
+      responses:
+        '201':
+          description: Satıcı başarıyla oluşturuldu
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email adresi zaten kullanımda
+
+  /auth/login:
+    post:
+      tags:
+        - auth
+      summary: Satıcı girişi
+      description: Email ve şifre ile giriş yapar, JWT token döner
+      operationId: loginMerchant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginCredentials'
+      responses:
+        '200':
+          description: Giriş başarılı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthToken'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/profile:
+    get:
+      tags:
+        - users
+      summary: Profil ve abonelik getir
+      description: Giriş yapan satıcının profil bilgilerini ve mevcut abonelik paketini getirir
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Başarılı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      tags:
+        - users
+      summary: Profil/Şifre güncelle
+      description: Satıcının profil bilgilerini veya şifresini günceller
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MerchantUpdate'
+      responses:
+        '200':
+          description: Başarıyla güncellendi
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    delete:
+      tags:
+        - users
+      summary: Satıcı hesabı sil/dondur
+      description: Hesabı sistemden tamamen siler veya dondurur
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Hesap başarıyla silindi/donduruldu
+
+  /subscriptions/packages:
+    get:
+      tags:
+        - users
+      summary: Abonelik paketlerini listele
+      description: Sistemdeki mevcut SaaS abonelik paketlerini (Aylık/Yıllık planlar) listeler
+      responses:
+        '200':
+          description: Başarılı liste döndü
+
+  /integrations:
+    post:
+      tags:
+        - integrations
+      summary: API Key/Entegrasyon Ekle
+      description: Pazaryeri API entegrasyon bilgilerini sisteme ekleme
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationCreate'
+      responses:
+        '201':
+          description: Entegrasyon başarılı
+          
+  /integrations/{integrationId}:
+    put:
+      tags:
+        - integrations
+      summary: Entegrasyon bilgilerini güncelleme
+      description: Süresi dolan token veya yeni API key güncellemesi
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IntegrationIdParam'
+      responses:
+        '200':
+          description: Güncelleme başarılı
+
+  /inventory/products:
+    get:
+      tags:
+        - inventory
+      summary: Kendi ürün listesini çekme
+      description: Entegre edilen pazaryerinden satıcının kendi ürün kataloğunu listeleme
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Ürünler başarıyla getirildi
+
+  /inventory/products/{productId}:
+    get:
+      tags:
+        - inventory
+      summary: Tekil ürün detayı
+      description: Stok adedi ve güncel satış fiyatını getirir
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProductIdParam'
+      responses:
+        '200':
+          description: Ürün detayları
+    delete:
+      tags:
+        - inventory
+      summary: Ürünü envanterden silme
+      description: Artık takibi istenmeyen ürünü siler
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProductIdParam'
+      responses:
+        '204':
+          description: Başarıyla silindi
+
+  /inventory/products/{productId}/min-price:
+    put:
+      tags:
+        - inventory
+      summary: Minimum satış fiyatı güncelleme
+      description: Zarar etmemek için taban kâr veya fiyat sınırını güncelleme
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProductIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                minPrice:
+                  type: number
+      responses:
+        '200':
+          description: Güncelleme başarılı
+
+  /competitors:
+    post:
+      tags:
+        - competitors
+      summary: Rakip ürün linki ekleme
+      description: Kendi ürünüyle eşleştirmek üzere takip edilecek rakip ürün linkini sisteme ekler
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                productId:
+                  type: string
+                competitorUrl:
+                  type: string
+      responses:
+        '201':
+          description: Rakip link başarıyla eklendi
+
+  /competitors/sync:
+    post:
+      tags:
+        - competitors
+      summary: Fiyatları güncelle (Manuel bot tetikleme)
+      description: Sistemin fiyatları anlık çekmesi için botu çalıştırır
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Senkronizasyon başlatıldı
+
+  /products/{productId}/competitors:
+    get:
+      tags:
+        - competitors
+      summary: Rakip satıcıları listele
+      description: Bir ürüne ait eklenmiş tüm rakip satıcıların listesi ve son fiyatları
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProductIdParam'
+      responses:
+        '200':
+          description: Rakip listesi döndü
+
+  /competitors/{competitorId}/history:
+    get:
+      tags:
+        - competitors
+      summary: Tarihsel fiyat değişim grafiği verileri
+      description: Belirli bir rakibin tarihsel fiyat geçmiş logları
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CompetitorIdParam'
+      responses:
+        '200':
+          description: Fiyat logları döndü
+
+  /competitors/{competitorId}/status:
+    put:
+      tags:
+        - competitors
+      summary: Takip durumu güncelle (Aktif/Pasif)
+      description: Belirli bir rakibin takip durumunu geçici durdurma
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CompetitorIdParam'
+      responses:
+        '200':
+          description: Durum başarıyla güncellendi
+
+  /competitors/{competitorId}:
+    delete:
+      tags:
+        - competitors
+      summary: Rakip ürün takibini silme
+      description: Sistemden bir rakip ürün takibini tamamen kaldırır
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CompetitorIdParam'
+      responses:
+        '204':
+          description: Başarıyla kaldırıldı
+
+  /pricing-rules:
+    get:
+      tags:
+        - pricing-rules
+      summary: Aktif kuralları listeleme
+      description: Satıcının oluşturduğu tüm dinamik fiyatlandırma kuralları
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Kurallar listelendi
+    post:
+      tags:
+        - pricing-rules
+      summary: Yeni kural oluşturma
+      description: Fiyatlandırma stratejisi / kuralı tanımlama
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: Kural başarıyla oluşturuldu
+
+  /pricing-rules/{ruleId}/assign:
+    post:
+      tags:
+        - pricing-rules
+      summary: Kuralı ürüne atama
+      description: Oluşturulan bir kuralı ürüne veya kategoriye atama
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RuleIdParam'
+      responses:
+        '200':
+          description: Başarıyla atandı
+
+  /pricing-rules/suggestions/{productId}:
+    get:
+      tags:
+        - pricing-rules
+      summary: Optimum BuyBox fiyatı önerisi
+      description: Algoritmanın bir ürün için hesapladığı tavsiye fiyat analizi
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProductIdParam'
+      responses:
+        '200':
+          description: Tavsiye döndü
+
+  /pricing-rules/{ruleId}:
+    put:
+      tags:
+        - pricing-rules
+      summary: Kural güncelleme
+      description: Mevcut kuralın parametrelerini (ör: 1 TL'den 5 TL'ye) güncelleme
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RuleIdParam'
+      responses:
+        '200':
+          description: Başarıyla güncellendi
+    delete:
+      tags:
+        - pricing-rules
+      summary: Kural silme
+      description: Kuralı tamamen silme
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RuleIdParam'
+      responses:
+        '204':
+          description: Kural başarıyla silindi
+
+  /analytics/dashboard:
+    get:
+      tags:
+        - analytics
+      summary: Özet istatistikler
+      description: BuyBox kazanma oranı, toplam takip edilen ürün sayısı gibi dashboard KPI'leri
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: İstatistikler döndü
+
+  /analytics/campaign-suggestions:
+    get:
+      tags:
+        - analytics
+      summary: Stok eritme / kampanya önerileri
+      description: Satış hızına bağlı yapay zeka tavsiyeleri
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Öneriler listelendi
+
+  /notifications:
+    get:
+      tags:
+        - notifications
+      summary: Bildirimleri listele
+      description: Kullanıcıya gelen uyarı geçmişi (Rakip stok bitirdi vb)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Bildirim listesi
+
+  /notifications/rules:
+    post:
+      tags:
+        - notifications
+      summary: Yeni alarm / bildirim kuralı oluşturma
+      description: Rakip fiyatı %10 düşerse uyar vb. otomasyon uyarısı ekleme
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: Kural başarıyla oluşturuldu
+
+  /notifications/{notificationId}/read:
+    put:
+      tags:
+        - notifications
+      summary: Bildirimi okundu olarak işaretle
+      description: Bildirimin okunmadı durumunu günceller
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/NotificationIdParam'
+      responses:
+        '200':
+          description: Güncellendi
+
+  /notifications/{notificationId}:
+    delete:
+      tags:
+        - notifications
+      summary: Bildirimi sil
+      description: Eski bildirimi panelden siler
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/NotificationIdParam'
+      responses:
+        '204':
+          description: Başarıyla silindi
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    ProductIdParam:
+      name: productId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IntegrationIdParam:
+      name: integrationId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    CompetitorIdParam:
+      name: competitorId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    RuleIdParam:
+      name: ruleId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    NotificationIdParam:
+      name: notificationId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    MerchantRegistration:
+      type: object
+      properties:
+        companyName:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          
+    LoginCredentials:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          
+    IntegrationCreate:
+      type: object
+      properties:
+        marketplace:
+          type: string
+        apiKey:
+          type: string
+        apiSecret:
+          type: string
+          
+    MerchantProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        companyName:
+          type: string
+          
+    MerchantUpdate:
+      type: object
+      properties:
+        companyName:
+          type: string
+          
+    AuthToken:
+      type: object
+      properties:
+        token:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Geçersiz istek
+    Unauthorized:
+      description: Yetkisiz erişim
