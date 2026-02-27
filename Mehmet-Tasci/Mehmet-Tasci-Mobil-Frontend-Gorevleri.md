@@ -1,4 +1,4 @@
-# Mehmet'in Mobil Frontend Görevleri
+# Mehmet Taşcı'nın Mobil Frontend Görevleri
 **Mobile Front-end Demo Videosu:** [Link buraya eklenecek](https://example.com)
 
 ## 1. Pazaryeri Entegrasyon Ekranı
