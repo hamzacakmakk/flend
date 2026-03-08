@@ -1,0 +1,1432 @@
+openapi: 3.0.3
+info:
+  title: Flend API
+  version: 1.0.0
+  description: >
+    E-ticaret pazaryerlerinde satış yapan firmalar için otomatik rekabet ve kâr optimizasyonu B2B SaaS platformu RESTful API'si.
+    Kullanıcı ve Abonelik Yönetimi, Pazaryeri Entegrasyonu, Envanter Yönetimi, Rakip Takibi, Dinamik Fiyatlandırma Kuralları, Analitik ve Bildirimler gibi özellikleri destekler.
+    Temel CRUD (Create, Read, Update, Delete) işlemlerini içerir. API, JWT tabanlı kimlik doğrulama ile korunmaktadır.
+  contact:
+    name: Flend Destek Ekibi
+    email: api-support@flend.com
+    url: https://api.flend.com/support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.flend.com/v1
+    description: Üretim sunucusu (Production)
+  - url: https://staging-api.flend.com/v1
+    description: Test sunucusu (Staging)
+  - url: http://localhost:3000/v1
+    description: Yerel geliştirme sunucusu (Development)
+
+tags:
+  - name: Kimlik Doğrulama
+    description: Kimlik doğrulama, satıcı girişi ve kayıt işlemleri
+  - name: Kullanıcılar
+    description: Satıcı profili ve abonelik yönetimi
+  - name: Entegrasyonlar
+    description: Trendyol, Amazon vb. pazaryeri API entegrasyonları
+  - name: Envanter
+    description: Kendi mağaza ürünlerinin ve taban fiyatlarının yönetimi
+  - name: Rakipler
+    description: Rakip ürün linkleme, fiyat logları ve bot senkronizasyonu
+  - name: Fiyatlandırma Kuralları
+    description: Dinamik fiyatlandırma kural motoru işlemleri
+  - name: Analitik
+    description: Dashboard istatistikleri ve stok/kampanya önerileri
+  - name: Bildirimler
+    description: Alarm kuralları ve sistem bildirimleri
+
+security:
+  - BearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Kimlik Doğrulama
+      summary: Yeni Satıcı Hesabı Oluşturma
+      operationId: registerMerchant
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MerchantRegistrationInput'
+      responses:
+        "201":
+          description: Satıcı başarıyla oluşturuldu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantProfile'
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: Email adresi zaten kullanımda
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags:
+        - Kimlik Doğrulama
+      summary: Satıcı Girişi
+      operationId: loginMerchant
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginCredentialsInput'
+      responses:
+        "200":
+          description: Giriş başarılı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthToken'
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/profile:
+    get:
+      tags:
+        - Kullanıcılar
+      summary: Profil ve Abonelik Getir
+      operationId: getProfile
+      responses:
+        "200":
+          description: Profil başarıyla getirildi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantProfile'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Kullanıcılar
+      summary: Profil/Şifre Güncelle
+      operationId: updateProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MerchantUpdateInput'
+      responses:
+        "200":
+          description: Profil başarıyla güncellendi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantProfile'
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Kullanıcılar
+      summary: Satıcı Hesabı Sil/Dondur
+      operationId: deleteProfile
+      responses:
+        "204":
+          description: Hesap başarıyla silindi veya donduruldu
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /subscriptions/packages:
+    get:
+      tags:
+        - Kullanıcılar
+      summary: Abonelik Paketlerini Listele
+      operationId: listPackages
+      security: []
+      responses:
+        "200":
+          description: Paketler başarıyla listelendi
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubscriptionPackage'
+
+  /integrations:
+    post:
+      tags:
+        - Entegrasyonlar
+      summary: API Key / Entegrasyon Ekle
+      operationId: addIntegration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationInput'
+      responses:
+        "201":
+          description: Entegrasyon başarıyla eklendi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Integration'
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /integrations/{integrationId}:
+    parameters:
+      - name: integrationId
+        in: path
+        required: true
+        description: Entegrasyonun benzersiz kimlik numarası
+        schema:
+          type: string
+          format: uuid
+        example: "abc12345"
+
+    put:
+      tags:
+        - Entegrasyonlar
+      summary: Entegrasyon Bilgilerini Güncelleme
+      operationId: updateIntegration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationInput'
+      responses:
+        "200":
+          description: Entegrasyon başarıyla güncellendi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Integration'
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Entegrasyon bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /inventory/products:
+    get:
+      tags:
+        - Envanter
+      summary: Kendi Ürün Listesini Çekme
+      operationId: listProducts
+      responses:
+        "200":
+          description: Ürünler başarıyla getirildi
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /inventory/products/{productId}:
+    parameters:
+      - name: productId
+        in: path
+        required: true
+        description: Ürünün benzersiz kimlik numarası
+        schema:
+          type: string
+          format: uuid
+        example: "prod-789"
+
+    get:
+      tags:
+        - Envanter
+      summary: Tekil Ürün Detayı
+      operationId: getProduct
+      responses:
+        "200":
+          description: Ürün detayı başarıyla getirildi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Ürün bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Envanter
+      summary: Ürünü Envanterden Silme
+      operationId: deleteProduct
+      responses:
+        "204":
+          description: Ürün başarıyla silindi
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Ürün bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /inventory/products/{productId}/min-price:
+    parameters:
+      - name: productId
+        in: path
+        required: true
+        description: Ürünün benzersiz kimlik numarası
+        schema:
+          type: string
+          format: uuid
+        example: "prod-789"
+
+    put:
+      tags:
+        - Envanter
+      summary: Minimum Satış Fiyatı Güncelleme
+      operationId: updateMinPrice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                minPrice:
+                  type: number
+                  format: float
+                  description: Ürünün satılabileceği minimum tutar (zarar kesme vb.)
+                  example: 120.50
+              required:
+                - minPrice
+      responses:
+        "200":
+          description: Minimum fiyat başarıyla güncellendi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Ürün bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /competitors:
+    post:
+      tags:
+        - Rakipler
+      summary: Rakip Ürün Linki Ekleme
+      operationId: addCompetitor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompetitorInput'
+      responses:
+        "201":
+          description: Rakip ürün başarıyla eklendi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Competitor'
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /competitors/sync:
+    post:
+      tags:
+        - Rakipler
+      summary: Fiyatları Güncelle (Manuel Bot Tetikleme)
+      operationId: syncCompetitorPrices
+      responses:
+        "200":
+          description: Senkronizasyon başarıyla başlatıldı
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /products/{productId}/competitors:
+    parameters:
+      - name: productId
+        in: path
+        required: true
+        description: Rakipleri listelenecek ilgili ürünün kimlik numarası
+        schema:
+          type: string
+          format: uuid
+        example: "prod-789"
+
+    get:
+      tags:
+        - Rakipler
+      summary: Rakip Satıcıları Listele
+      operationId: listCompetitorsForProduct
+      responses:
+        "200":
+          description: Rakipler listelendi
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Competitor'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Ürün bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /competitors/{competitorId}/history:
+    parameters:
+      - name: competitorId
+        in: path
+        required: true
+        description: Rakibin benzersiz kimlik numarası
+        schema:
+          type: string
+          format: uuid
+        example: "comp-321"
+
+    get:
+      tags:
+        - Rakipler
+      summary: Tarihsel Fiyat Değişim Verileri
+      operationId: getCompetitorHistory
+      responses:
+        "200":
+          description: Fiyat geçmişi başarıyla getirildi
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PriceHistory'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Rakip bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /competitors/{competitorId}/status:
+    parameters:
+      - name: competitorId
+        in: path
+        required: true
+        description: Rakibin benzersiz kimlik numarası
+        schema:
+          type: string
+          format: uuid
+        example: "comp-321"
+
+    put:
+      tags:
+        - Rakipler
+      summary: Takip Durumu Güncelle (Aktif/Pasif)
+      operationId: updateCompetitorStatus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isActive:
+                  type: boolean
+                  description: Rakip ürünün fiyat takibinin durumu
+                  example: true
+              required:
+                - isActive
+      responses:
+        "200":
+          description: Durum başarıyla güncellendi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Competitor'
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Rakip bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /competitors/{competitorId}:
+    parameters:
+      - name: competitorId
+        in: path
+        required: true
+        description: Rakibin benzersiz kimlik numarası
+        schema:
+          type: string
+          format: uuid
+        example: "comp-321"
+
+    delete:
+      tags:
+        - Rakipler
+      summary: Rakip Ürün Takibini Silme
+      operationId: deleteCompetitor
+      responses:
+        "204":
+          description: Rakip başarıyla silindi
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Rakip bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /pricing-rules:
+    get:
+      tags:
+        - Fiyatlandırma Kuralları
+      summary: Aktif Kuralları Listeleme
+      operationId: listPricingRules
+      responses:
+        "200":
+          description: Kurallar listelendi
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PricingRule'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Fiyatlandırma Kuralları
+      summary: Yeni Kural Oluşturma
+      operationId: addPricingRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PricingRuleInput'
+      responses:
+        "201":
+          description: Kural başarıyla oluşturuldu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingRule'
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /pricing-rules/{ruleId}/assign:
+    parameters:
+      - name: ruleId
+        in: path
+        required: true
+        description: Kuralın benzersiz kimlik numarası
+        schema:
+          type: string
+          format: uuid
+        example: "rule-1122"
+
+    post:
+      tags:
+        - Fiyatlandırma Kuralları
+      summary: Kuralı Ürüne Atama
+      operationId: assignPricingRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                productId:
+                  type: string
+                  format: uuid
+                  example: "prod-789"
+              required:
+                - productId
+      responses:
+        "200":
+          description: Kural ürüne başarıyla atandı
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Kural veya ürün bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /pricing-rules/suggestions/{productId}:
+    parameters:
+      - name: productId
+        in: path
+        required: true
+        description: Öneri alınacak ürünün kimlik numarası
+        schema:
+          type: string
+          format: uuid
+        example: "prod-789"
+
+    get:
+      tags:
+        - Fiyatlandırma Kuralları
+      summary: Optimum BuyBox Fiyatı Önerisi
+      operationId: suggestPrice
+      responses:
+        "200":
+          description: Algoritma önerisi başarıyla döndü
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceSuggestion'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Ürün bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /pricing-rules/{ruleId}:
+    parameters:
+      - name: ruleId
+        in: path
+        required: true
+        description: Kuralın benzersiz kimlik numarası
+        schema:
+          type: string
+          format: uuid
+        example: "rule-1122"
+
+    put:
+      tags:
+        - Fiyatlandırma Kuralları
+      summary: Kural Güncelleme
+      operationId: updatePricingRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PricingRuleInput'
+      responses:
+        "200":
+          description: Kural başarıyla güncellendi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingRule'
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Kural bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Fiyatlandırma Kuralları
+      summary: Kural Silme
+      operationId: deletePricingRule
+      responses:
+        "204":
+          description: Kural başarıyla silindi
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Kural bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /analytics/dashboard:
+    get:
+      tags:
+        - Analitik
+      summary: Özet İstatistikler (Dashboard)
+      operationId: getDashboardAnalytics
+      responses:
+        "200":
+          description: İstatistikler başarıyla döndü
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardAnalytics'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /analytics/campaign-suggestions:
+    get:
+      tags:
+        - Analitik
+      summary: Stok Eritme / Kampanya Önerileri
+      operationId: getCampaignSuggestions
+      responses:
+        "200":
+          description: Öneriler başarıyla listelendi
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CampaignSuggestion'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /notifications:
+    get:
+      tags:
+        - Bildirimler
+      summary: Bildirimleri Listele
+      operationId: listNotifications
+      responses:
+        "200":
+          description: Bildirim listesi
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /notifications/rules:
+    post:
+      tags:
+        - Bildirimler
+      summary: Yeni Alarm / Bildirim Kuralı Oluşturma
+      operationId: addNotificationRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRuleInput'
+      responses:
+        "201":
+          description: Kural başarıyla oluşturuldu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationRule'
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /notifications/{notificationId}/read:
+    parameters:
+      - name: notificationId
+        in: path
+        required: true
+        description: Bildirimin benzersiz kimlik numarası
+        schema:
+          type: string
+          format: uuid
+        example: "notif-555"
+
+    put:
+      tags:
+        - Bildirimler
+      summary: Bildirimi Okundu Olarak İşaretle
+      operationId: readNotification
+      responses:
+        "200":
+          description: Bildirim durumu okundu olarak güncellendi
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Bildirim bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /notifications/{notificationId}:
+    parameters:
+      - name: notificationId
+        in: path
+        required: true
+        description: Bildirimin benzersiz kimlik numarası
+        schema:
+          type: string
+          format: uuid
+        example: "notif-555"
+
+    delete:
+      tags:
+        - Bildirimler
+      summary: Bildirimi Silme
+      operationId: deleteNotification
+      responses:
+        "204":
+          description: Bildirim başarıyla silindi
+        "401":
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Bildirim bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'JWT tabanlı kimlik doğrulama. İstek başlığına "Authorization: Bearer <token>" eklenmeli.'
+
+  schemas:
+    MerchantRegistrationInput:
+      type: object
+      description: Satıcı kayıt verileri
+      properties:
+        companyName:
+          type: string
+          minLength: 2
+          example: "Flend Teknoloji A.Ş."
+        email:
+          type: string
+          format: email
+          example: "info@flend.com"
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: "GüçlüŞifre123!"
+      required:
+        - companyName
+        - email
+        - password
+
+    LoginCredentialsInput:
+      type: object
+      description: Satıcı giriş verileri
+      properties:
+        email:
+          type: string
+          format: email
+          example: "info@flend.com"
+        password:
+          type: string
+          format: password
+          example: "GüçlüŞifre123!"
+      required:
+        - email
+        - password
+
+    MerchantProfile:
+      type: object
+      description: Satıcı profil verileri
+      properties:
+        _id:
+          type: string
+          format: uuid
+          description: Satıcının eşsiz kimlik numarası
+          example: "mer-12345"
+        companyName:
+          type: string
+          description: Firma adı
+          example: "Flend Teknoloji A.Ş."
+        email:
+          type: string
+          format: email
+          description: Sisteme kayıtlı e-posta
+          example: "info@flend.com"
+        createdAt:
+          type: string
+          format: date-time
+          description: Hesabın oluşturulma tarihi
+          example: "2026-03-01T10:00:00Z"
+      required:
+        - companyName
+        - email
+
+    MerchantUpdateInput:
+      type: object
+      description: Profil güncelleme isteği için veritürü
+      properties:
+        companyName:
+          type: string
+          minLength: 2
+          example: "Yeni Flend Teknoloji A.Ş."
+        password:
+          type: string
+          format: password
+          description: Opsiyonel şifre değişikliği
+          example: "YeniSifre_789"
+      required:
+        - companyName
+
+    AuthToken:
+      type: object
+      description: Kimlik doğrulama sonucu dönülen JWT
+      properties:
+        token:
+          type: string
+          description: Yetkilendirme için kullanılan ayraç token
+          example: "eyJhbGciOiJIUzI1NiIsInR5..."
+      required:
+        - token
+
+    SubscriptionPackage:
+      type: object
+      description: Abonelik paketi modeli (Örn. Aylık, Yıllık limitsiz vb.)
+      properties:
+        _id:
+          type: string
+          format: uuid
+          example: "sub-1"
+        name:
+          type: string
+          description: Paketin adı
+          example: "Pro Yıllık"
+        price:
+          type: number
+          format: float
+          description: Paketin ücreti
+          example: 99.99
+        features:
+          type: array
+          items:
+            type: string
+          description: Pakete ait özellikler listesi
+          example: ["Sınırsız Entegrasyon", "Rakip Takibi", "Öncelikli Destek"]
+      required:
+        - name
+        - price
+
+    IntegrationInput:
+      type: object
+      description: Pazaryeri entegrasyon ekleme vb. detayları
+      properties:
+        marketplace:
+          type: string
+          description: Pazaryeri adı (Örn: Trendyol, Hepsiburada, vb.)
+          example: "Trendyol"
+        apiKey:
+          type: string
+          description: Pazaryeri için servis API anahtarı
+          example: "api_key_ab12qw"
+        apiSecret:
+          type: string
+          description: Pazaryeri için servis Gizli Anahtar
+          example: "secret_xy98z"
+      required:
+        - marketplace
+        - apiKey
+        - apiSecret
+
+    Integration:
+      type: object
+      description: Sisteme tanımlı pazaryeri entegrasyon ayarları
+      properties:
+        _id:
+          type: string
+          format: uuid
+          example: "int-12345"
+        marketplace:
+          type: string
+          example: "Trendyol"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-03-05T08:00:00Z"
+      required:
+        - marketplace
+
+    Product:
+      type: object
+      description: Envanterdeki firma ürünü
+      properties:
+        _id:
+          type: string
+          format: uuid
+          example: "prod-789"
+        name:
+          type: string
+          description: Ürün Adı
+          example: "Akıllı Telefon Model X"
+        stock:
+          type: integer
+          description: Güncel stok durumu
+          example: 100
+        price:
+          type: number
+          format: float
+          description: Sistemdeki satış fiyatı
+          example: 249.99
+        minPrice:
+          type: number
+          format: float
+          description: Belirlenmiş olan minimum fiyat (zarar eşiği)
+          example: 200.00
+      required:
+        - name
+        - stock
+        - price
+
+    CompetitorInput:
+      type: object
+      description: Ürüne bağlanacak rakip bilgisi
+      properties:
+        productId:
+          type: string
+          format: uuid
+          description: Kendi mağazamızdaki ürünün ID'si
+          example: "prod-789"
+        competitorUrl:
+          type: string
+          format: url
+          description: Rakip ürünün pazaryeri linki
+          example: "https://www.trendyol.com/..."
+      required:
+        - productId
+        - competitorUrl
+
+    Competitor:
+      type: object
+      description: Rakiplerin fiyatlarını ve son drumunu tutan obje
+      properties:
+        _id:
+          type: string
+          format: uuid
+          example: "comp-321"
+        sellerName:
+          type: string
+          description: Rakip satıcı ismi
+          example: "Global Teknoloji"
+        lastPrice:
+          type: number
+          format: float
+          description: Rakibin en son tespit edilen fiyatı
+          example: 245.00
+        isActive:
+          type: boolean
+          description: Bu rakip takip ediliyor mu
+          example: true
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-03-06T15:30:00Z"
+      required:
+        - sellerName
+        - lastPrice
+        - isActive
+
+    PriceHistory:
+      type: object
+      description: Rakip satıcıya ait fiyat değişim kütüğü
+      properties:
+        price:
+          type: number
+          format: float
+          description: Hangi fiyata düştüğü/çıktığı
+          example: 245.00
+        recordedAt:
+          type: string
+          format: date-time
+          description: Fiyatın kaydedildiği tarih saat
+          example: "2026-03-05T12:00:00Z"
+      required:
+        - price
+        - recordedAt
+
+    PricingRuleInput:
+      type: object
+      description: Ürünlere verilecek otomatik fiyat kuralları oluşturma modelidir
+      properties:
+        ruleName:
+          type: string
+          description: Kuralın açıklamalı / kısa ismi
+          example: "Rakipten 1 TL düşüğe çek"
+        margin:
+          type: number
+          format: float
+          description: Rakibin fiyatından ne kadarlık bir alt/üst limit tanımlanacağı
+          example: 1.00
+        isPercentage:
+          type: boolean
+          description: Limit hesaplamasının yüzde mi yoksa TL mi (sabit) olduğunu belirtir
+          example: false
+      required:
+        - ruleName
+        - margin
+        - isPercentage
+
+    PricingRule:
+      type: object
+      description: Sistemde aktif fiyatlandırma kuralı
+      properties:
+        _id:
+          type: string
+          format: uuid
+          example: "rule-1122"
+        ruleName:
+          type: string
+          example: "Rakipten 1 TL düşüğe çek"
+        margin:
+          type: number
+          format: float
+          example: 1.00
+        isPercentage:
+          type: boolean
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-03-01T12:00:00Z"
+      required:
+        - ruleName
+        - margin
+        - isPercentage
+
+    PriceSuggestion:
+      type: object
+      description: Kural ve rakiplere göre hesaplanan sistem önerisidir
+      properties:
+        suggestedPrice:
+          type: number
+          format: float
+          description: Sistem tarafından önerilen optimal satış fiyatı
+          example: 244.00
+        reason:
+          type: string
+          description: Önerilme gerekçesi / Kural açıklaması
+          example: "Rakip Global Teknoloji'den (245.00) 1 TL daha düşük olacak şekilde uygulandı."
+      required:
+        - suggestedPrice
+        - reason
+
+    DashboardAnalytics:
+      type: object
+      description: Ön panel (Kullanıcı giriş) istatistiklerini tutar
+      properties:
+        totalProducts:
+          type: integer
+          description: Sisteme eklenen toplam ürün sayısı
+          example: 154
+        buyBoxWon:
+          type: integer
+          description: Buybox kazanılan ürün adedi / Pazar lideri oranı
+          example: 87
+        totalCompetitors:
+          type: integer
+          description: İzlenen toplam rakip satıcı sayısı
+          example: 201
+      required:
+        - totalProducts
+        - buyBoxWon
+        - totalCompetitors
+
+    CampaignSuggestion:
+      type: object
+      description: Kritik stok seviyelerinde ve satış hızında düşüş olan ürünler için öneriler
+      properties:
+        productId:
+          type: string
+          format: uuid
+          description: Öneriye konu ürün
+          example: "prod-789"
+        suggestionMsg:
+          type: string
+          description: Tavsiye metni
+          example: "Son 1 haftada satış hızınız %20 düştü, kısa süreli bir kampanya önerilir."
+      required:
+        - productId
+        - suggestionMsg
+
+    NotificationRuleInput:
+      type: object
+      description: Yeni alarm / bildirim oluşturma veri giriş modelidir
+      properties:
+        condition:
+          type: string
+          description: Tetikoşulunun türü
+          example: "PRICE_DROP"
+        threshold:
+          type: number
+          format: float
+          description: Koşulun geçmesi gereken eşik değer (Örn %10)
+          example: 10
+      required:
+        - condition
+        - threshold
+
+    NotificationRule:
+      type: object
+      description: Sistem tarafından işletilen alarm kurallarını gösterir
+      properties:
+        _id:
+          type: string
+          format: uuid
+          example: "notif-rule-999"
+        condition:
+          type: string
+          example: "PRICE_DROP"
+        threshold:
+          type: number
+          format: float
+          example: 10
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-03-04T10:00:00Z"
+      required:
+        - condition
+        - threshold
+
+    Notification:
+      type: object
+      description: Sistemin tetiklediği ve kullanıcıya gönderdiği uyarılardır
+      properties:
+        _id:
+          type: string
+          format: uuid
+          example: "notif-555"
+        message:
+          type: string
+          description: Kullanıcıya gösterilecek uyarı mesajı
+          example: "Dikkat: 'Akıllı Telefon Model X' adlı üründe 'Global Teknoloji' fiyatını %10 düşürdü!"
+        isRead:
+          type: boolean
+          description: Bildirimin kullanıcı tarafından okunup okunmadığı
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-03-06T15:45:00Z"
+      required:
+        - message
+        - isRead
+
+    Error:
+      type: object
+      description: Hata durumlarında döndürülen standart hata yanıtı
+      properties:
+        message:
+          type: string
+          description: Hatayı açıklayan mesaj
+          example: "Geçersiz istek verisi"
+      required:
+        - message
