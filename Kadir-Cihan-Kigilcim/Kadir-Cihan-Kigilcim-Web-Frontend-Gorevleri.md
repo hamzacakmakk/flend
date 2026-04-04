@@ -1,6 +1,6 @@
 # Kadir Cihan Kığılcım'ın Web Frontend Görevleri
 **Front-end Domain Adresi:** `https://flend-ed5r.vercel.app`
-**Front-end Test Videosu:** [Link buraya eklenecek](https://example.com)
+**Front-end Test Videosu:** https://youtu.be/zEjoRkFDtSQ
 
 ## 1. Yeni Bir Dinamik Fiyatlandırma Kuralı Oluşturma Formu
 - **API Endpoint:** `POST /api/pricing-rules`
