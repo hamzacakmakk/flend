@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { integrationAPI } from '../services/api';
-import IntegrationForm from '../components/IntegrationForm';
+import IntegrationForm from '../components/integrationForm';
 import toast from 'react-hot-toast';
 import {
   Plus,

@@ -123,7 +123,7 @@ export default function IntegrationForm({ integration, onSubmit, onCancel }) {
               value={form.api_key}
               onChange={handleChange}
               required
-              placeholder="API Anahtarı veya Müşteri Numaranız"
+              placeholder={form.marketplace_name === 'Trendyol' ? 'SatıcıID:API_Key (Örn: 12345:Ahmet...)' : 'API Anahtarı veya Müşteri Numaranız'}
               className={inputClass}
             />
           </div>
