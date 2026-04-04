@@ -7,18 +7,29 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [newRule, setNewRule] = useState({ ruleName: '', ruleType: 'COMPETITOR_BASED', value: '', unit: 'TRY' });
 
-  // Mock fetch
+  // Real fetch from Supabase
   const fetchRules = async () => {
     setLoading(true);
-    // In a real app: const { data } = await supabase.from('pricing_rules').select('*');
-    // We mock data for now
-    setTimeout(() => {
-      setRules([
-        { id: '1', ruleName: 'Rakip altı kal', ruleType: 'COMPETITOR_BASED', value: 1.0, unit: 'TRY' },
-        { id: '2', ruleName: 'Minimum kar marjı', ruleType: 'MARGIN_BASED', value: 10.0, unit: '%' }
-      ]);
+    try {
+      const { data, error } = await supabase.from('pricing_rules').select('*').order('created_at', { ascending: false });
+      if (error) {
+        console.error("Error fetching rules:", error);
+      } else {
+        // Map database columns (rule_name, rule_type) to React state attributes (ruleName, ruleType)
+        const formattedData = data.map(item => ({
+          id: item.id,
+          ruleName: item.rule_name,
+          ruleType: item.rule_type,
+          value: item.value,
+          unit: item.unit
+        }));
+        setRules(formattedData);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   useEffect(() => {
@@ -27,15 +38,48 @@ function App() {
 
   const handleAddRule = async (e) => {
     e.preventDefault();
-    const ruleToAdd = { ...newRule, id: Date.now().toString(), value: parseFloat(newRule.value) };
-    // In a real app: await supabase.from('pricing_rules').insert([ruleToAdd]);
-    setRules([...rules, ruleToAdd]);
-    setNewRule({ ruleName: '', ruleType: 'COMPETITOR_BASED', value: '', unit: 'TRY' });
+    try {
+      const dbPayload = {
+        rule_name: newRule.ruleName,
+        rule_type: newRule.ruleType,
+        value: parseFloat(newRule.value),
+        unit: newRule.unit
+      };
+      
+      const { data, error } = await supabase.from('pricing_rules').insert([dbPayload]).select();
+      
+      if (error) {
+        console.error("Error adding rule:", error);
+        alert("Ekleme sırasında hata: " + error.message);
+      } else if (data && data.length > 0) {
+        const addedItem = data[0];
+        const newFormattedRule = {
+          id: addedItem.id,
+          ruleName: addedItem.rule_name,
+          ruleType: addedItem.rule_type,
+          value: addedItem.value,
+          unit: addedItem.unit
+        };
+        setRules([newFormattedRule, ...rules]);
+        setNewRule({ ruleName: '', ruleType: 'COMPETITOR_BASED', value: '', unit: 'TRY' });
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleDeleteRule = async (id) => {
-    // In a real app: await supabase.from('pricing_rules').delete().eq('id', id);
-    setRules(rules.filter(rule => rule.id !== id));
+    try {
+      const { error } = await supabase.from('pricing_rules').delete().eq('id', id);
+      if (error) {
+        console.error("Error deleting rule:", error);
+        alert("Silme sırasında hata: " + error.message);
+      } else {
+        setRules(rules.filter(rule => rule.id !== id));
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
