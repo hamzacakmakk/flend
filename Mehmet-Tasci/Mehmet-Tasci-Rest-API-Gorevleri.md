@@ -1,6 +1,6 @@
 # Mehmet Taşçı'nın REST API Metotları
 
-**Yayınlanan REST API Domain Adresi:** `https://flendv2.vercel.app`
+**Yayınlanan REST API Domain Adresi:** [https://flendv2.vercel.app]
 **API Test Videosu:** [https://youtu.be/a34A8Ha5aYI?si=C-s4bKunrxMZF3zi]
 
 ---
