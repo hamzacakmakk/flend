@@ -1,6 +1,6 @@
 # Kadir Cihan Kığılcım'ın REST API Metotları
 
-**API Test Videosu:** [Link buraya eklenecek](https://example.com)
+**API Test Videosu:** https://youtu.be/gdUicjcEhlQ
 
 **REST API Domain Adresi:** `https://wvxagkluzxhngzkzmqwd.supabase.co/rest/v1`
 
