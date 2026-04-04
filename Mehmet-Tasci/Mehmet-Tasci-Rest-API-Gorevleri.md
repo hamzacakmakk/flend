@@ -1,73 +1,114 @@
+# Mehmet Taşçı'nın REST API Metotları
 
-**Yayınlanan REST API Domain Adresi:** `https://flendv2.vercel.app/`
-**API Test Videosu:** [Link buraya eklenecek](https://example.com)
+**Yayınlanan REST API Domain Adresi:** `https://flendv2.vercel.app`
+**API Test Videosu:** [https://youtu.be/a34A8Ha5aYI?si=C-s4bKunrxMZF3zi]
 
-### API Metotları ve Yolları
+---
 
-   **0. APİ çalışma kontrolü (Health_check)**
-* **Metot:** `POST`
-* **Yol:** `/api/health`
-* **Açıklama:** APİ düzgün çalışıyor mu kontrol
+## 0. API Çalışma Kontrolü (Health Check)
 
-   **0.1. Entegrasyon senkronizasyonu ()**Sync_integration
-* **Metot:** `POST`
-* **Yol:** `http://flendv2.vercel.app/api/integrations/bd573aa6-0f85-44fc-b618-39a45a9417bf/sync`(entegrasyon ıd path parameters alır)
-* **Açıklama:** Entegrasyonlardan çekilen ürün verilerini senkronize eder.
+**Endpoint:** `POST /api/health`
 
+**Açıklama:** API'nin düzgün çalışıp çalışmadığını kontrol eder.
 
-    **1. Entegrasyon ekleme (Add_İntegration)**
-* **Metot:** `POST`
-* **Yol:** `/api/integrations`
-* **Açıklama:** sisteme E-ticaret uygulama satıcı profilini entegre eder
-* **Request Body:**
-    ```json
-  {
-	"marketplace_name": "diğer",
-    "api_key":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZsamlxZXZ1dWZyZ2hwdHptdWJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNDQ3NTksImV4cCI6MjA5MDcyMDc1OX0.pMCBDTWKSH2Q65agj5IxuGzDTDAdCdhVO_LoXOmYuUQ"
-  }
-    ```
+**Response:** `200 OK` - API başarıyla çalışıyor
 
-    **2. Ürünleri görme (Display_All_Products)**
-* **Metot:** `GET`
-* **Yol:** `/api/products`
-* **Açıklama:** Entegre edilen pazaryerinden satıcının kendi ürün listesini sisteme çekip listeleme
+---
 
+## 1. Entegrasyon Ekleme (Add Integration)
 
+**Endpoint:** `POST /api/integrations`
 
-    **3. Tekil ürün bilgileri getirme (Health_check)**
-* **Metot:** `GET`
-* **Yol:** `/api/products/2e301917-bfdf-42c3-ba89-cad152ac284b`(ürün ıd path parameters alır)
-* **Açıklama:**  Sistemdeki tekil bir ürünün detaylarını (stok adedi, güncel satış fiyatı) getirme.
+**Açıklama:** Sisteme e-ticaret uygulama satıcı profilini entegre eder.
 
+**Request Body:**
+```json
+{
+  "marketplace_name": "diğer",
+  "api_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZsamlxZXZ1dWZyZ2hwdHptdWJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNDQ3NTksImV4cCI6MjA5MDcyMDc1OX0.pMCBDTWKSH2Q65agj5IxuGzDTDAdCdhVO_LoXOmYuUQ"
+}
+```
 
-    **4.Min fiyat güncelleme
-* **Metot:** `PUT`
-* **Yol:** `/api/products/2e301917-bfdf-42c3-ba89-cad152ac284b/min-price`(ürün ıd path parameters alır)
-* **Açıklama:** Sistemdeki bir ürünün "Minimum Satış Fiyatı" (Zarar etmemek için taban fiyat) sınırını güncelleme.
-* **Request Body:**
-    ```json
-    {
-    "min_price":2500.0
-    }
-    ```
+**Response:** `201 Created` - Entegrasyon başarıyla oluşturuldu
 
-    **5. Entegrasyon güncelleme (Update_İntegration)**
-* **Metot:** `PUT`
-* **Yol:** `http://flendv2.vercel.app//api/integrations/bd573aa6-0f85-44fc-b618-39a45a9417bf`(entegrasyon ıd path parameters alır)
-* **Açıklama:** Pazaryeri API bağlantı bilgilerini (Süresi dolan token vb.) güncelleme.
+---
 
-    **6.Ürün silme (Delete_Products)
-* **Metot:** `DELETE`
-* **Yol:** `/api/products/2e301917-bfdf-42c3-ba89-cad152ac284b`(ürün ıd path parameters alır)
-* **Açıklama:** Artık satışı yapılmayan/takip edilmek istenmeyen bir ürünü kendi envanter panelinden silme.
+## 2. Entegrasyon Senkronizasyonu (Sync Integration)
 
+**Endpoint:** `POST /api/integrations/{integrationId}/sync`
 
-## 2. Entegrasyon ve Envanter Sorumlusu (Integration & Inventory)
-Satıcının Trendyol/Amazon vb. mağazasını sisteme bağlaması ve kendi ürünlerini yönetmesiyle ilgilenir.
+**Path Parameters:**
+- `integrationId` (string, required) - Entegrasyon ID'si
 
-- **POST (Create):** Pazaryeri API entegrasyon bilgilerini (API Key/Secret) sisteme ekleme.
-- **GET (Read):** Entegre edilen pazaryerinden satıcının kendi ürün listesini sisteme çekip listeleme.
-- **GET (Read):** Sistemdeki tekil bir ürünün detaylarını (stok adedi, güncel satış fiyatı) getirme.
-- **PUT (Update):** Sistemdeki bir ürünün "Minimum Satış Fiyatı" (Zarar etmemek için taban fiyat) sınırını güncelleme.
-- **PUT (Update):** Pazaryeri API bağlantı bilgilerini (Süresi dolan token vb.) güncelleme.
-- **DELETE (Delete):** Artık satışı yapılmayan/takip edilmek istenmeyen bir ürünü kendi envanter panelinden silme.
+**Açıklama:** Entegrasyonlardan çekilen ürün verilerini senkronize eder.
+
+**Response:** `200 OK` - Senkronizasyon başarıyla tamamlandı
+
+---
+
+## 3. Ürünleri Listeleme (Display All Products)
+
+**Endpoint:** `GET /api/products`
+
+**Açıklama:** Entegre edilen pazaryerinden satıcının kendi ürün listesini sisteme çekip listeleme.
+
+**Response:** `200 OK` - Ürün listesi başarıyla getirildi
+
+---
+
+## 4. Tekil Ürün Bilgisi Getirme (Get Single Product)
+
+**Endpoint:** `GET /api/products/{productId}`
+
+**Path Parameters:**
+- `productId` (string, required) - Ürün ID'si
+
+**Açıklama:** Sistemdeki tekil bir ürünün detaylarını (stok adedi, güncel satış fiyatı) getirme.
+
+**Response:** `200 OK` - Ürün bilgileri başarıyla getirildi
+
+---
+
+## 5. Min Fiyat Güncelleme (Update Min Price)
+
+**Endpoint:** `PUT /api/products/{productId}/min-price`
+
+**Path Parameters:**
+- `productId` (string, required) - Ürün ID'si
+
+**Açıklama:** Sistemdeki bir ürünün "Minimum Satış Fiyatı" (zarar etmemek için taban fiyat) sınırını güncelleme.
+
+**Request Body:**
+```json
+{
+  "min_price": 2500.0
+}
+```
+
+**Response:** `200 OK` - Minimum fiyat başarıyla güncellendi
+
+---
+
+## 6. Entegrasyon Güncelleme (Update Integration)
+
+**Endpoint:** `PUT /api/integrations/{integrationId}`
+
+**Path Parameters:**
+- `integrationId` (string, required) - Entegrasyon ID'si
+
+**Açıklama:** Pazaryeri API bağlantı bilgilerini (süresi dolan token vb.) güncelleme.
+
+**Response:** `200 OK` - Entegrasyon başarıyla güncellendi
+
+---
+
+## 7. Ürün Silme (Delete Product)
+
+**Endpoint:** `DELETE /api/products/{productId}`
+
+**Path Parameters:**
+- `productId` (string, required) - Ürün ID'si
+
+**Açıklama:** Artık satışı yapılmayan/takip edilmek istenmeyen bir ürünü kendi envanter panelinden silme.
+
+**Response:** `204 No Content` - Ürün başarıyla silindi
