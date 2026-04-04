@@ -2,7 +2,7 @@
 
 **API Test Videosu:** [Link buraya eklenecek](https://example.com)
 
-**REST API Domain Adresi:** `https://[PROJECT_REF].supabase.co/rest/v1`
+**REST API Domain Adresi:** `https://wvxagkluzxhngzkzmqwd.supabase.co/rest/v1`
 
 ## 1. Yeni Bir Dinamik Fiyatlandırma Kuralı Oluşturma
 - **Endpoint:** `POST /pricing_rules`
