@@ -2,7 +2,9 @@
 // M-Hamza-Cakmak REST API ile Frontend Entegrasyonu
 // ==========================================
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+let rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+// Remove trailing slash if present
+const API_URL = rawApiUrl.endsWith('/') ? rawApiUrl.slice(0, -1) : rawApiUrl
 
 // 1. POST /competitors - Rakip Ürün Linki Ekleme
 export async function addCompetitor({ productId, competitorUrl, sellerName }) {
