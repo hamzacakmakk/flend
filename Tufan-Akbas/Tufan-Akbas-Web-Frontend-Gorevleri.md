@@ -1,6 +1,6 @@
 # Tufan'ın Web Frontend Görevleri
-**Web Front-end Demo Videosu:** [Link buraya eklenecek](https://example.com)
 
+**Web Front-end Demo Videosu:** [YouTube Video Linki Buraya Gelecek](https://youtube.com/...)
 **Front-end Domain Adresi:** `https://flend-frontend.vercel.app`
 
 ## 1. Web Satıcı Kayıt (Register) Sayfası
