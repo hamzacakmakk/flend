@@ -1,6 +1,8 @@
 # Tufan'ın Web Frontend Görevleri
 **Web Front-end Demo Videosu:** [Link buraya eklenecek](https://example.com)
 
+**Front-end Domain Adresi:** `https://tufan-flend-frontend.vercel.app` *(Gerçek domain ile güncelleyiniz)*
+
 ## 1. Web Satıcı Kayıt (Register) Sayfası
 - **UI Görevi:** Yeni satıcılar için web standartlarında tam ekran veya modern bir kayıt formu tasarımı.
 - **Bileşenler:** 

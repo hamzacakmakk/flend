@@ -2,6 +2,9 @@
 
 **API Test Videosu:** [Link buraya eklenecek](https://example.com)
 
+**REST API Domain Adresi:** `https://tufan-flend-rest-api.vercel.app` *(Gerçek domain ile güncelleyiniz)*
+**Postman JSON Export:** `Tufan-Akbas-Postman-Collection.json` olarak klasöre kaydedildi.
+
 ## Kullanıcı ve Abonelik Sorumlusu (User & Subscription)
 Sisteme kayıt olan satıcıları (e-ticaret firmalarını) ve SaaS aboneliklerini yönetir.
 
