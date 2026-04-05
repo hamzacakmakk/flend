@@ -1,6 +1,11 @@
 import axios from 'axios';
 
-const API_BASE = '/api';
+// Runtime check: localhost → vite proxy, her şey else → doğrudan backend URL
+const BACKEND_URL = 'https://nurullah-turgut-backendfinal.vercel.app';
+const API_BASE =
+  window.location.hostname === 'localhost'
+    ? '/api'           // Vite proxy localhost:5000'e yönlendirir
+    : `${BACKEND_URL}/api`; // Vercel production'da doğrudan backend'e gönderir
 
 const api = axios.create({
   baseURL: API_BASE,

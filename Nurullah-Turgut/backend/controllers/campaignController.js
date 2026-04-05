@@ -1,40 +1,21 @@
-const supabase = require('../config/supabase');
-
-// GET /api/campaigns/suggestions
-// Satış hızına bağlı üretilen kampanya önerilerini listeler
-const getSuggestions = async (req, res) => {
+exports.getSuggestions = async (req, res) => {
   try {
-    const userId = req.query.user_id || process.env.DEMO_USER_ID;
+    const { user_id } = req.query;
+    if (!user_id) {
+      return res.status(400).json({ success: false, error: 'user_id gerekli' });
+    }
 
-    const { data, error } = await supabase
-      .from('campaign_suggestions')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('status', 'pending')
-      .order('priority', { ascending: true })
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-
-    // Öncelik sıralamasını düzenle (critical > high > medium > low)
-    const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-    const sorted = data.sort((a, b) =>
-      (priorityOrder[a.priority] ?? 99) - (priorityOrder[b.priority] ?? 99)
-    );
+    // Örnek veri döküyoruz
+    const suggestions = [
+      { id: 1, type: 'Stok Eritme', product: 'Laptop Standı', advice: 'Fiyatı %10 indir' },
+      { id: 2, type: 'Kampanya', product: 'Gaming Mouse', advice: '2 al 1 öde yap' }
+    ];
 
     res.status(200).json({
       success: true,
-      count: sorted.length,
-      data: sorted,
+      data: suggestions
     });
   } catch (error) {
-    console.error('Kampanya önerileri hatası:', error.message);
-    res.status(500).json({
-      success: false,
-      error: 'Kampanya önerileri getirilemedi.',
-      details: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
-
-module.exports = { getSuggestions };

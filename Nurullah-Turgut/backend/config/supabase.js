@@ -5,9 +5,10 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ SUPABASE_URL ve SUPABASE_ANON_KEY çevresel değişkenleri gereklidir.');
-  console.error('   Lütfen .env dosyasını kontrol edin.');
-  process.exit(1);
+  throw new Error(
+    '❌ SUPABASE_URL ve SUPABASE_ANON_KEY çevresel değişkenleri eksik! ' +
+    'Vercel Dashboard > Settings > Environment Variables bölümünden ekleyin.'
+  );
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);

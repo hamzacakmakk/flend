@@ -69,16 +69,13 @@ export default function AlertRuleForm() {
         notify_via: 'in_app',
       });
     } catch (err) {
-      // demo mode - still show success
-      console.warn('API bağlantısı yok, demo mod:', err.message);
-      setSuccess(true);
-      setForm({
-        rule_name: '',
-        condition_type: '',
-        threshold_value: '',
-        threshold_unit: 'percent',
-        notify_via: 'in_app',
-      });
+      const message =
+        err?.response?.data?.error ||
+        err?.response?.data?.details ||
+        err?.message ||
+        'Sunucuya bağlanılamadı. Lütfen tekrar deneyin.';
+      console.error('Alarm kuralı oluşturma hatası:', err);
+      setError(message);
     } finally {
       setSubmitting(false);
       setTimeout(() => setSuccess(false), 4000);

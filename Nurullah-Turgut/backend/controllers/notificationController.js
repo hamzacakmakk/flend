@@ -1,108 +1,59 @@
 const supabase = require('../config/supabase');
 
-// GET /api/notifications
-// Kullanıcıya ait bildirimleri tarihe göre sıralı listeler
-const getAll = async (req, res) => {
+// 1. Bildirimleri Listeleme
+exports.getAll = async (req, res) => {
   try {
-    const userId = req.query.user_id || process.env.DEMO_USER_ID;
+    const { user_id } = req.query;
+    let query = supabase.from('notifications').select('*');
 
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+    if (user_id) {
+      query = query.eq('user_id', user_id);
+    }
 
+    const { data, error } = await query;
     if (error) throw error;
 
-    const unreadCount = data.filter((n) => !n.is_read).length;
-
-    res.status(200).json({
-      success: true,
-      count: data.length,
-      unread_count: unreadCount,
-      data,
-    });
+    res.status(200).json({ success: true, data: data });
   } catch (error) {
-    console.error('Bildirimler hatası:', error.message);
-    res.status(500).json({
-      success: false,
-      error: 'Bildirimler getirilemedi.',
-      details: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
-// PUT /api/notifications/:id/read
-// Bildirimi okundu olarak işaretler
-const markAsRead = async (req, res) => {
+// 2. Bildirimi Okundu İşaretleme (O sorunlu .single() kısmını kaldırdık!)
+exports.markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
-
     const { data, error } = await supabase
       .from('notifications')
       .update({ is_read: true })
       .eq('id', id)
-      .select()
-      .single();
+      .select();
 
     if (error) throw error;
-
-    if (!data) {
-      return res.status(404).json({
-        success: false,
-        error: 'Bildirim bulunamadı.',
-      });
-    }
 
     res.status(200).json({
       success: true,
       message: 'Bildirim okundu olarak işaretlendi.',
-      data,
+      data: data ? data[0] : null
     });
   } catch (error) {
-    console.error('Bildirim güncelleme hatası:', error.message);
-    res.status(500).json({
-      success: false,
-      error: 'Bildirim güncellenemedi.',
-      details: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
-// DELETE /api/notifications/:id
-// Bildirimi siler
-const deleteNotification = async (req, res) => {
+// 3. Bildirim Silme
+exports.deleteNotification = async (req, res) => {
   try {
     const { id } = req.params;
-
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('notifications')
       .delete()
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', id);
 
     if (error) throw error;
 
-    if (!data) {
-      return res.status(404).json({
-        success: false,
-        error: 'Bildirim bulunamadı.',
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: 'Bildirim başarıyla silindi.',
-    });
+    res.status(200).json({ success: true, message: 'Bildirim başarıyla silindi.' });
   } catch (error) {
-    console.error('Bildirim silme hatası:', error.message);
-    res.status(500).json({
-      success: false,
-      error: 'Bildirim silinemedi.',
-      details: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
-
-module.exports = { getAll, markAsRead, deleteNotification };

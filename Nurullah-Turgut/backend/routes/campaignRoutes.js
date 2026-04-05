@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getSuggestions } = require('../controllers/campaignController');
 
-// GET /api/campaigns/suggestions
+// Sonuç: /api/analytics + /suggestions
 router.get('/suggestions', getSuggestions);
 
 module.exports = router;
