@@ -181,7 +181,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3001"
+      "value": "https://flend-inky.vercel.app"
     },
     {
       "key": "token",

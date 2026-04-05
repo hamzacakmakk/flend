@@ -1,5 +1,6 @@
 # Tufan'ın Mobil Backend Görevleri
 **Mobil Front-end ile Back-end Bağlanmış Test Videosu:** [Link buraya eklenecek](https://example.com)
+**Canlı API Domain:** `https://flend-inky.vercel.app`
 
 ## 1. Yeni Satıcı Hesabı Oluşturma (Register) Servisi
 - **API Endpoint:** `POST /api/auth/register`

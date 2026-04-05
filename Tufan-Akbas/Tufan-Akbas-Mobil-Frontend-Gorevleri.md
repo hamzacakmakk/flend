@@ -1,5 +1,6 @@
 # Tufan'ın Mobil Frontend Görevleri
 **Mobile Front-end Demo Videosu:** [Link buraya eklenecek](https://example.com)
+**Canlı Web/API Domain:** `https://flend-frontend.vercel.app` / `https://flend-inky.vercel.app`
 
 ## 1. Satıcı Kayıt (Register) Ekranı
 - **UI Görevi:** Sisteme yeni katılacak e-ticaret firmaları için kayıt formu arayüzünü tasarlama.
