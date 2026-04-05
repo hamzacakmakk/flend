@@ -1,6 +1,6 @@
 # Nurullah Turgut'un Mobil Frontend Görevleri
 
-**Mobile Front-end Demo Videosu:** [Link buraya eklenecek](https://example.com)
+**Mobile Front-end Demo Videosu:** 
 
 ## Dashboard, Analitik ve Bildirim Sorumlusu (Analytics & Alerts)
 

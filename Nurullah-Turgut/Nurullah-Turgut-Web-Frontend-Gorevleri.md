@@ -1,6 +1,6 @@
 # Nurullah Turgut'un Web Frontend Görevleri
-
-**Web Front-end Demo Videosu:** [Link buraya eklenecek](https://example.com)
+**Canlı Site Adresi:** [https://nurullah-turgut-frontend.vercel.app/]
+**Web Front-end Demo Videosu:** [https://www.youtube.com/watch?v=HYEstuv5hl8]
 
 ## Dashboard, Analitik ve Bildirim Sorumlusu (Analytics & Alerts)
 
