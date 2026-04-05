@@ -49,7 +49,6 @@ export default function HistoryPage() {
   const prices = history.map((h) => Number(h.price))
   const minPrice = prices.length > 0 ? Math.min(...prices) : 0
   const maxPrice = prices.length > 0 ? Math.max(...prices) : 0
-  const priceChange = prices.length >= 2 ? prices[0] - prices[prices.length - 1] : 0 // chronological change: latest vs oldest. wait, history is sorted by descending?
   // Let's ensure chronological for graph and calculation:
   const isDescending = history.length >= 2 && new Date(history[0].recorded_at) > new Date(history[history.length - 1].recorded_at);
   const actualOldest = isDescending ? prices[prices.length - 1] : prices[0];
