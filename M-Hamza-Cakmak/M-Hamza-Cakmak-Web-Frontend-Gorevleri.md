@@ -1,6 +1,6 @@
 # Muhammed Hamza Çakmak'ın Web Frontend Görevleri
-**Web Frontend Domain Adresi:** https://frontend-senin-domain.vercel.app (ÖDEVİ YÜKLEDİKTEN SONRA BURAYI GÜNCELLE)
-**Front-end Test Videosu:** [YouTube Linki Buraya Eklenecek]
+**Web Frontend Domain Adresi:** https://flend-seven.vercel.app/products
+**Front-end Test Videosu:** https://www.youtube.com/watch?v=NJxQA_IOJjQ
 
 ## 1. Rakip Ekleme Modal / Form Alanı
 - **API Endpoint:** `POST /competitors`

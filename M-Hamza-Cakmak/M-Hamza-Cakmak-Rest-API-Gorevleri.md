@@ -1,7 +1,7 @@
 # Muhammed Hamza Çakmak'ın REST API Metotları (Rakip Takibi ve Scraper Sorumlusu)
 
-**REST API Domain Adresi:** https://restapi-senin-domain.vercel.app (ÖDEVİ YÜKLEDİKTEN SONRA BURAYI GÜNCELLE)
-**API Test Videosu:** [YouTube Linki Buraya Eklenecek]
+**REST API Domain Adresi:** https://flend-backend.vercel.app/products
+**API Test Videosu:** https://www.youtube.com/watch?v=24306gbnlp0
 
 ## 1. Rakip Ürün Linki Ekleme
 - **Endpoint:** `POST /competitors`

@@ -1,23 +1,33 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 
-dotenv.config();
+// dotenv.config() is handled by import 'dotenv/config'
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.SUPABASE_URL?.trim();
+const supabaseKey = process.env.SUPABASE_ANON_KEY?.trim();
+
+console.log('--- DB Config ---');
+console.log('Project URL:', supabaseUrl);
+console.log('API Key Loaded:', !!supabaseKey);
 
 let supabase = null;
 if (supabaseUrl && supabaseKey) {
-  supabase = createClient(supabaseUrl, supabaseKey);
+  try {
+    supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('✅ Supabase Client initialized');
+  } catch (err) {
+    console.error('❌ Supabase Client Error:', err.message);
+  }
 } else {
   console.warn('⚠️ SUPABASE_URL veya SUPABASE_ANON_KEY .env dosyasında bulunamadı. Veritabanı sorguları hata verecektir.');
 }
+console.log('------------------');
 
 // 1. POST /competitors - Rakip Ürün Linki Ekleme
 app.post('/competitors', async (req, res) => {
