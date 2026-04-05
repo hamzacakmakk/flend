@@ -178,8 +178,12 @@ app.get('/products', async (req, res) => {
   }
 });
 
-// Sunucuyu başlat
+// Sunucuyu başlat (Vercel Serverless Function Desteği ile)
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Flend Rakip Takibi REST API port ${PORT} üzerinde çalışıyor.`);
-});
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`🚀 Flend Rakip Takibi REST API port ${PORT} üzerinde çalışıyor.`);
+  });
+}
+
+export default app;

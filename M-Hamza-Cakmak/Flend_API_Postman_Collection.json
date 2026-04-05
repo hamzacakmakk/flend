@@ -1,0 +1,161 @@
+{
+  "info": {
+    "name": "Flend Rakip Takip API",
+    "description": "Muhammed Hamza Çakmak Web Frontend Görevi - Backend API Test Koleksiyonu",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Ürünleri Listele",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/products",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "products"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. Rakip Ekle",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"productId\": \"urunun-id-sini-yaziniz\",\n    \"competitorUrl\": \"https://example.com/rakip-urun\",\n    \"sellerName\": \"Rakip Firma\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/competitors",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "competitors"
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. Botu Çalıştır (Fiyatları Senkronize Et)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/competitors/sync",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "competitors",
+            "sync"
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. Ürüne Ait Rakipleri Getir",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/products/{{PRODUCT_ID}}/competitors",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "products",
+            "{{PRODUCT_ID}}",
+            "competitors"
+          ]
+        }
+      }
+    },
+    {
+      "name": "5. Rakip Geçmiş Fiyatları Getir",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/competitors/{{COMPETITOR_ID}}/history",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "competitors",
+            "{{COMPETITOR_ID}}",
+            "history"
+          ]
+        }
+      }
+    },
+    {
+      "name": "6. Rakip Takip Durumunu Güncelle",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"isActive\": false\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/competitors/{{COMPETITOR_ID}}/status",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "competitors",
+            "{{COMPETITOR_ID}}",
+            "status"
+          ]
+        }
+      }
+    },
+    {
+      "name": "7. Rakibi Sil",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/competitors/{{COMPETITOR_ID}}",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "competitors",
+            "{{COMPETITOR_ID}}"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "PRODUCT_ID",
+      "value": "1"
+    },
+    {
+      "key": "COMPETITOR_ID",
+      "value": "1"
+    }
+  ]
+}
