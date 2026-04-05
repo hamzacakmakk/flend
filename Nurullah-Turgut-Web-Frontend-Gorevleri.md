@@ -1,0 +1,1 @@
+# Web Front-end Test Videosu\n\nThis file contains demo videos related to web front-end projects.\n\n## Resources\n- Video 1\n- Video 2\n- Video 3\n\nFor further information, please contact the project manager.
