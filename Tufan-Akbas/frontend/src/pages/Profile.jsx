@@ -21,7 +21,7 @@ export default function Profile() {
       const token = localStorage.getItem('flend_token')
       if (!token) return navigate('/login')
       
-      const { data } = await axios.get('http://localhost:3001/v1/users/profile', {
+      const { data } = await axios.get('https://flend-inky.vercel.app/v1/users/profile', {
         headers: { Authorization: `Bearer ${token}` }
       })
       setProfile(data)
@@ -42,7 +42,7 @@ export default function Profile() {
     e.preventDefault()
     try {
       const token = localStorage.getItem('flend_token')
-      await axios.put('http://localhost:3001/v1/users/profile', 
+      await axios.put('https://flend-inky.vercel.app/v1/users/profile', 
         { companyName, password },
         { headers: { Authorization: `Bearer ${token}` }}
       )
@@ -56,7 +56,7 @@ export default function Profile() {
   const handleDelete = async () => {
     try {
       const token = localStorage.getItem('flend_token')
-      await axios.delete('http://localhost:3001/v1/users/profile', {
+      await axios.delete('https://flend-inky.vercel.app/v1/users/profile', {
         headers: { Authorization: `Bearer ${token}` }
       })
       localStorage.removeItem('flend_token')

@@ -12,7 +12,7 @@ export default function Login() {
     e.preventDefault()
     setError('')
     try {
-      const { data } = await axios.post('http://localhost:3001/v1/auth/login', { email, password })
+      const { data } = await axios.post('https://flend-inky.vercel.app/v1/auth/login', { email, password })
       localStorage.setItem('flend_token', data.token)
       navigate('/profile')
     } catch (err) {

@@ -13,7 +13,7 @@ export default function Register() {
     e.preventDefault()
     setError('')
     try {
-      await axios.post('http://localhost:3001/v1/auth/register', { email, password, companyName })
+      await axios.post('https://flend-inky.vercel.app/v1/auth/register', { email, password, companyName })
       navigate('/login')
     } catch (err) {
       setError(err.response?.data?.error || 'Kayıt işlemi başarısız. Lütfen tekrar deneyin.')

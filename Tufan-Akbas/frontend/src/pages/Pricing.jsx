@@ -14,7 +14,7 @@ export default function Pricing() {
 
   const fetchPackages = async () => {
     try {
-      const { data } = await axios.get('http://localhost:3001/v1/subscriptions/packages')
+      const { data } = await axios.get('https://flend-inky.vercel.app/v1/subscriptions/packages')
       setPackages(data)
     } catch (err) {
       console.error(err)
