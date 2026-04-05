@@ -1,0 +1,253 @@
+{
+  "info": {
+    "_postman_id": "376fab85-f559-4627-850d-1bbe324b8f1c",
+    "name": "Flend_Api_Testleri",
+    "description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "53738187",
+    "_collection_link": "https://go.postman.co/collection/53738187-376fab85-f559-4627-850d-1bbe324b8f1c?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Health_Check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://flendv2.vercel.app//api/health",
+          "protocol": "http",
+          "host": [
+            "flendv2",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "",
+            "api",
+            "health"
+          ]
+        },
+        "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+      },
+      "response": []
+    },
+    {
+      "name": "Add_İntegration",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Successful POST request\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n\t\"marketplace_name\": \"diğer\",\n    \"api_key\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZsamlxZXZ1dWZyZ2hwdHptdWJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNDQ3NTksImV4cCI6MjA5MDcyMDc1OX0.pMCBDTWKSH2Q65agj5IxuGzDTDAdCdhVO_LoXOmYuUQ\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://flendv2.vercel.app/api/integrations",
+          "protocol": "https",
+          "host": [
+            "flendv2",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "integrations"
+          ]
+        },
+        "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+      },
+      "response": []
+    },
+    {
+      "name": "Update_İntegration",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "http://flendv2.vercel.app//api/integrations/c36055e8-7c42-4023-a372-0c78687d6771",
+          "protocol": "http",
+          "host": [
+            "flendv2",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "",
+            "api",
+            "integrations",
+            "c36055e8-7c42-4023-a372-0c78687d6771"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Sync_integration",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "http://flendv2.vercel.app/api/integrations/c36055e8-7c42-4023-a372-0c78687d6771/sync",
+          "protocol": "http",
+          "host": [
+            "flendv2",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "integrations",
+            "c36055e8-7c42-4023-a372-0c78687d6771",
+            "sync"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Display_All_Products",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://flendv2.vercel.app/api/products",
+          "protocol": "http",
+          "host": [
+            "flendv2",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "products"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Display_One_Products",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://flendv2.vercel.app/api/products/0e5584ab-8a2d-4cdd-82f4-3aef5cae287c",
+          "protocol": "http",
+          "host": [
+            "flendv2",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "products",
+            "0e5584ab-8a2d-4cdd-82f4-3aef5cae287c"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update_Min_Price",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"min_price\":250.50\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://flendv2.vercel.app/api/products/0e5584ab-8a2d-4cdd-82f4-3aef5cae287c/min-price",
+          "protocol": "http",
+          "host": [
+            "flendv2",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "products",
+            "0e5584ab-8a2d-4cdd-82f4-3aef5cae287c",
+            "min-price"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete_Products",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://flendv2.vercel.app/api/products/0e5584ab-8a2d-4cdd-82f4-3aef5cae287c",
+          "protocol": "http",
+          "host": [
+            "flendv2",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "products",
+            "0e5584ab-8a2d-4cdd-82f4-3aef5cae287c"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
