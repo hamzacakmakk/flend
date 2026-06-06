@@ -1,0 +1,26 @@
+{
+  "name": "flend-mobile",
+  "version": "1.0.0",
+  "main": "expo-router/entry",
+  "dependencies": {
+    "expo": "~56.0.9",
+    "expo-router": "~4.0.17",
+    "expo-status-bar": "~56.0.4",
+    "expo-linking": "~7.0.5",
+    "expo-constants": "~17.0.7",
+    "@expo/vector-icons": "^14.0.4",
+    "react": "19.2.3",
+    "react-native": "0.85.3"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "private": true
+}
