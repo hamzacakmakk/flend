@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
   getCompetitorsByProduct,
@@ -12,6 +12,181 @@ import DeleteConfirmModal from '../components/DeleteConfirmModal'
 import SyncButton from '../components/SyncButton'
 import toast from 'react-hot-toast'
 
+// ─── Swipeable Rakip Kartı ───────────────────────────────────────────────────
+function SwipeableCompetitorCard({ comp, product, onToggle, onDeleteRequest, onHistoryClick }) {
+  const startX = useRef(null)
+  const currentX = useRef(0)
+  const cardRef = useRef(null)
+  const [offset, setOffset] = useState(0)
+  const [swiped, setSwiped] = useState(false)
+
+  const SWIPE_THRESHOLD = 80
+
+  const handleStart = (clientX) => {
+    startX.current = clientX
+  }
+
+  const handleMove = (clientX) => {
+    if (startX.current === null) return
+    const delta = clientX - startX.current
+    if (delta < 0) {
+      currentX.current = Math.max(delta, -SWIPE_THRESHOLD - 20)
+      setOffset(currentX.current)
+    } else if (swiped && delta > 0) {
+      // Geri kaydırma
+      const newOffset = -SWIPE_THRESHOLD + delta
+      currentX.current = Math.min(newOffset, 0)
+      setOffset(currentX.current)
+    }
+  }
+
+  const handleEnd = () => {
+    if (startX.current === null) return
+    startX.current = null
+    if (currentX.current < -SWIPE_THRESHOLD) {
+      setOffset(-SWIPE_THRESHOLD)
+      setSwiped(true)
+    } else {
+      setOffset(0)
+      setSwiped(false)
+    }
+    currentX.current = 0
+  }
+
+  // Touch events
+  const onTouchStart = (e) => handleStart(e.touches[0].clientX)
+  const onTouchMove = (e) => handleMove(e.touches[0].clientX)
+  const onTouchEnd = () => handleEnd()
+
+  // Mouse events (masaüstü test için)
+  const onMouseDown = (e) => handleStart(e.clientX)
+  const onMouseMove = (e) => { if (startX.current !== null) handleMove(e.clientX) }
+  const onMouseUp = () => handleEnd()
+  const onMouseLeave = () => { if (startX.current !== null) handleEnd() }
+
+  const getPriceBadge = (competitorPrice) => {
+    if (!product) return null
+    const myPrice = Number(product.current_price)
+    const theirPrice = Number(competitorPrice)
+    if (theirPrice < myPrice)
+      return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100/80 text-emerald-700 ring-1 ring-emerald-600/20 shadow-sm animate-scale-in">Avantajlıyız</span>
+    if (theirPrice > myPrice)
+      return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-100/80 text-rose-700 ring-1 ring-rose-600/20 shadow-sm animate-scale-in">Riskli (Biz Pahalıyız)</span>
+    return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 ring-1 ring-slate-500/20 shadow-sm animate-scale-in">Aynı Fiyat</span>
+  }
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl mb-3 select-none">
+      {/* Swipe ile açılan kırmızı arka plan aksiyonu */}
+      <div className="absolute inset-0 flex items-center justify-end pr-4 bg-gradient-to-l from-rose-500 to-rose-600 rounded-2xl">
+        <div className="flex flex-col items-center gap-1 text-white">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span className="text-[10px] font-bold uppercase tracking-wider">Takibi Bırak</span>
+        </div>
+      </div>
+
+      {/* Kart gövdesi */}
+      <div
+        ref={cardRef}
+        className={`glass border border-white/60 rounded-2xl px-4 py-4 relative z-10 transition-shadow duration-200 ${!comp.is_active ? 'opacity-60 saturate-50' : ''}`}
+        style={{
+          transform: `translateX(${offset}px)`,
+          transition: startX.current !== null ? 'none' : 'transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94)',
+          cursor: 'grab',
+        }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseLeave}
+        onClick={() => {
+          // Swipe açıksa tıklama silmeyi tetiklesin
+          if (swiped) {
+            onDeleteRequest(comp)
+            setOffset(0)
+            setSwiped(false)
+          }
+        }}
+      >
+        {/* Üst satır: Avatar + İsim + Toggle */}
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 flex-shrink-0 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border border-white shadow-sm flex items-center justify-center font-bold text-slate-500 text-sm">
+              {comp.seller_name.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-slate-800 truncate">{comp.seller_name}</p>
+              <a
+                href={comp.competitor_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-slate-400 hover:text-indigo-500 flex items-center gap-1 mt-0.5"
+                onClick={(e) => e.stopPropagation()}
+              >
+                İlana Git
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          {/* Optimistic Toggle Switch */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggle(comp) }}
+            className={`relative flex-shrink-0 inline-flex h-6 w-11 items-center justify-center rounded-full transition-colors duration-300 shadow-inner ${comp.is_active ? 'bg-emerald-500 shadow-emerald-600/30' : 'bg-slate-300'}`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${comp.is_active ? 'translate-x-2.5' : '-translate-x-2.5'}`} />
+          </button>
+        </div>
+
+        {/* Alt satır: Fiyat + Badge + Aksiyonlar */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-800 to-slate-600 tracking-tight">
+              {comp.last_price
+                ? `${Number(comp.last_price).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺`
+                : <span className="text-slate-400 text-sm font-medium">Bekleniyor</span>}
+            </span>
+            {comp.last_price ? getPriceBadge(comp.last_price) : <span className="text-xs text-slate-300 italic">Veri Yok</span>}
+          </div>
+
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <Link
+              to={`/competitors/${comp.id}/history`}
+              className="text-xs font-bold px-3 py-1.5 rounded-lg text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white transition-colors duration-200 shadow-sm"
+            >
+              Geçmiş
+            </Link>
+            <button
+              onClick={() => onDeleteRequest(comp)}
+              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors duration-200"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Swipe ipucu göstergesi */}
+        {!swiped && (
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-20 pointer-events-none">
+            <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Ana Sayfa ───────────────────────────────────────────────────────────────
 export default function CompetitorsPage() {
   const { productId } = useParams()
   const [competitors, setCompetitors] = useState([])
@@ -49,13 +224,24 @@ export default function CompetitorsPage() {
     }
   }
 
+  // ── Optimistic UI Toggle + Rollback ──────────────────────────────────────
   const handleToggleStatus = async (competitor) => {
+    const newStatus = !competitor.is_active
+
+    // 1. Optimistic: State'i anında güncelle (API bekleme)
+    setCompetitors((prev) =>
+      prev.map((c) => c.id === competitor.id ? { ...c, is_active: newStatus } : c)
+    )
+
     try {
-      await updateCompetitorStatus(competitor.id, !competitor.is_active)
-      toast.success(competitor.is_active ? 'Takip durduruldu' : 'Takip başlatıldı')
-      loadData()
+      await updateCompetitorStatus(competitor.id, newStatus)
+      toast.success(newStatus ? 'Takip başlatıldı' : 'Takip durduruldu')
     } catch {
-      toast.error('Durum güncellenemedi')
+      // 2. Rollback: API hata verirse eski değere geri dön
+      setCompetitors((prev) =>
+        prev.map((c) => c.id === competitor.id ? { ...c, is_active: competitor.is_active } : c)
+      )
+      toast.error('Bağlantı hatası — durum geri alındı')
     }
   }
 
@@ -67,19 +253,6 @@ export default function CompetitorsPage() {
     } catch {
       toast.error('Silme başarısız')
     }
-  }
-
-  const getPriceBadge = (competitorPrice) => {
-    if (!product) return null
-    const myPrice = Number(product.current_price)
-    const theirPrice = Number(competitorPrice)
-
-    if (theirPrice < myPrice) {
-      return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100/80 text-emerald-700 ring-1 ring-emerald-600/20 shadow-sm animate-scale-in">Avantajlıyız</span>
-    } else if (theirPrice > myPrice) {
-      return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-100/80 text-rose-700 ring-1 ring-rose-600/20 shadow-sm animate-scale-in">Riskli (Biz Pahalıyız)</span>
-    }
-    return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 ring-1 ring-slate-500/20 shadow-sm animate-scale-in">Aynı Fiyat</span>
   }
 
   if (loading) {
@@ -97,7 +270,7 @@ export default function CompetitorsPage() {
   return (
     <div className="animate-fade-in relative">
       <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 -z-10"></div>
-      
+
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400 mb-8">
         <Link to="/products" className="hover:text-indigo-600 transition-colors">Ürünler</Link>
@@ -133,7 +306,17 @@ export default function CompetitorsPage() {
         </div>
       </div>
 
-      {/* Competitors Table */}
+      {/* Swipe ipucu */}
+      {competitors.length > 0 && (
+        <div className="flex items-center gap-2 text-xs text-slate-400 font-medium mb-4 px-1">
+          <svg className="w-4 h-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+          </svg>
+          <span>Kartı sola kaydırarak takibi sonlandırabilirsiniz</span>
+        </div>
+      )}
+
+      {/* Rakip Listesi — Swipeable Kartlar */}
       {competitors.length === 0 ? (
         <div className="text-center py-20 glass rounded-3xl border border-white/60 shadow-sm relative overflow-hidden">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
@@ -154,74 +337,17 @@ export default function CompetitorsPage() {
           </div>
         </div>
       ) : (
-        <div className="glass rounded-3xl border border-white/60 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Satıcı Bilgisi</th>
-                  <th className="text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Piyasa Fiyatı</th>
-                  <th className="text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Analiz</th>
-                  <th className="text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Bot Durumu</th>
-                  <th className="text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Aksiyonlar</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100/50">
-                {competitors.map((comp) => (
-                  <tr key={comp.id} className={`hover:bg-slate-50/50 transition-colors duration-200 group ${!comp.is_active ? 'opacity-60 saturate-50' : ''}`}>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border border-white shadow-sm flex items-center justify-center font-bold text-slate-500 group-hover:scale-105 transition-transform">
-                          {comp.seller_name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-800">{comp.seller_name}</p>
-                          <a href={comp.competitor_url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-slate-400 hover:text-indigo-500 truncate max-w-[200px] flex items-center gap-1 mt-0.5">
-                            İlana Git
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                          </a>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <span className="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-800 to-slate-600 tracking-tight">
-                        {comp.last_price ? `${Number(comp.last_price).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺` : 'Bekleniyor'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5">
-                      {comp.last_price ? getPriceBadge(comp.last_price) : <span className="text-xs text-slate-300 italic">Veri Yok</span>}
-                    </td>
-                    <td className="px-6 py-5">
-                      <button
-                        onClick={() => handleToggleStatus(comp)}
-                        className={`relative inline-flex h-6 w-11 items-center justify-center rounded-full transition-colors duration-300 shadow-inner ${comp.is_active ? 'bg-emerald-500 shadow-emerald-600/30' : 'bg-slate-300'}`}
-                      >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${comp.is_active ? 'translate-x-2.5' : '-translate-x-2.5'}`} />
-                      </button>
-                    </td>
-                    <td className="px-6 py-5 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          to={`/competitors/${comp.id}/history`}
-                          className="text-xs font-bold px-3 py-1.5 rounded-lg text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white transition-colors duration-200 shadow-sm"
-                        >
-                          Geçmiş
-                        </Link>
-                        <button
-                          onClick={() => setDeleteTarget(comp)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors duration-200"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div>
+          {competitors.map((comp) => (
+            <SwipeableCompetitorCard
+              key={comp.id}
+              comp={comp}
+              product={product}
+              onToggle={handleToggleStatus}
+              onDeleteRequest={setDeleteTarget}
+              onHistoryClick={() => {}}
+            />
+          ))}
         </div>
       )}
 
