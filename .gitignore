@@ -2,6 +2,10 @@
 node_modules/
 **/node_modules/
 
+# Mobil lockfile commit edilmez — EAS'in npm ci yerine npm install kullanmasi icin
+# (npm surum uyumsuzlugu npm ci'da "Missing @expo/metro-runtime" hatasi veriyordu)
+mobile/package-lock.json
+
 # Environment / secrets
 .env
 .env.local
