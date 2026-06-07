@@ -28,10 +28,23 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      ["expo-build-properties", { "android": { "usesCleartextTraffic": true } }]
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
     ],
     "extra": {
-      "apiBaseUrl": "http://10.67.236.7:5000"
+      "apiBaseUrl": "http://10.67.236.7:5000",
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "c68ff030-166c-46e6-96d4-ae569f48491c"
+      }
     }
   }
 }
