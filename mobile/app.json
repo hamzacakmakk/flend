@@ -27,10 +27,11 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      ["expo-build-properties", { "android": { "usesCleartextTraffic": true } }]
     ],
     "extra": {
-      "apiBaseUrl": "http://192.168.1.100:5000"
+      "apiBaseUrl": "http://10.67.236.7:5000"
     }
   }
 }

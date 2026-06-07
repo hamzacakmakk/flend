@@ -3,6 +3,7 @@
 // ==========================================================================
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { loadToken, saveToken, clearToken } from './tokenStore';
+import { loadApiBaseUrl } from '../config';
 import { login as apiLogin, register as apiRegister, getProfile } from '../api/auth';
 import type { User, RegisterInput } from '../api';
 
@@ -25,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     (async () => {
+      await loadApiBaseUrl();   // kayıtlı sunucu adresini token'dan önce yükle
       const t = await loadToken();
       setToken(t);
       if (t) {

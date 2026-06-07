@@ -2,7 +2,7 @@
 // lib/http.ts — Tek fetch sarmalayıcı
 // Base URL + Authorization (Bearer) enjeksiyonu + timeout + JSON + hata yönetimi.
 // ==========================================================================
-import { API_BASE_URL } from './config';
+import { getApiBaseUrl } from './config';
 import { getToken, clearToken } from './auth/tokenStore';
 
 interface HttpOptions extends RequestInit {
@@ -16,7 +16,7 @@ export async function http<T = unknown>(path: string, opts: HttpOptions = {}): P
   const token = opts.auth === false ? null : getToken();
 
   try {
-    const res = await fetch(`${API_BASE_URL}${path}`, {
+    const res = await fetch(`${getApiBaseUrl()}${path}`, {
       ...opts,
       signal: controller.signal,
       headers: {

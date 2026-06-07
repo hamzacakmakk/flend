@@ -2,15 +2,19 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../lib/auth/AuthContext';
 import { FormInput, PrimaryButton } from '../../components/ui';
 import { colors } from '../../lib/theme';
+import { getApiBaseUrl, saveApiBaseUrl } from '../../lib/config';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { signIn } = useAuth();
   const [email, setEmail] = useState('demo@flend.com');
   const [password, setPassword] = useState('demo1234');
+  const [serverUrl, setServerUrl] = useState(getApiBaseUrl());
+  const [showServer, setShowServer] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -19,13 +23,19 @@ export default function LoginScreen() {
       setError('E-posta ve parola zorunludur');
       return;
     }
+    if (!serverUrl.trim()) {
+      setError('Sunucu adresi boş olamaz');
+      setShowServer(true);
+      return;
+    }
     setError('');
     setLoading(true);
     try {
+      await saveApiBaseUrl(serverUrl); // önce sunucu adresini uygula
       await signIn(email.trim(), password);
       router.replace('/(tabs)/dashboard');
     } catch (e: any) {
-      setError(e?.message || 'Giriş başarısız');
+      setError(e?.message || 'Giriş başarısız — sunucu adresini kontrol edin');
     } finally {
       setLoading(false);
     }
@@ -53,6 +63,29 @@ export default function LoginScreen() {
             </TouchableOpacity>
             <Text style={styles.demoHint}>Demo: demo@flend.com / demo1234</Text>
           </View>
+
+          {/* Sunucu adresi (çalışma zamanı ayarı — tek APK her backend ile çalışır) */}
+          <TouchableOpacity style={styles.serverToggle} onPress={() => setShowServer((s) => !s)} activeOpacity={0.8}>
+            <Ionicons name="server-outline" size={14} color={colors.muted} />
+            <Text style={styles.serverToggleText} numberOfLines={1}>Sunucu: {serverUrl || '(boş)'}</Text>
+            <Ionicons name={showServer ? 'chevron-up' : 'chevron-down'} size={14} color={colors.muted} />
+          </TouchableOpacity>
+          {showServer ? (
+            <View style={styles.serverBox}>
+              <FormInput
+                label="Sunucu Adresi (Backend URL)"
+                value={serverUrl}
+                onChangeText={setServerUrl}
+                placeholder="http://192.168.1.50:5000"
+                keyboardType="url"
+                autoCapitalize="none"
+              />
+              <Text style={styles.serverHint}>
+                Backend adresini girin: LAN IP (http://...:5000), tünel ya da bulut URL'si (https://...).
+                Giriş yapınca cihazda kaydedilir — tek APK her ağda çalışır.
+              </Text>
+            </View>
+          ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -61,7 +94,7 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  scroll: { flexGrow: 1, justifyContent: 'center', padding: 24, gap: 28 },
+  scroll: { flexGrow: 1, justifyContent: 'center', padding: 24, gap: 18 },
   logoWrap: { alignItems: 'center', gap: 8 },
   logoIcon: { width: 64, height: 64, borderRadius: 20, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', shadowColor: colors.primary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 14, elevation: 8 },
   logoLetter: { color: '#fff', fontWeight: '800', fontSize: 30 },
@@ -74,4 +107,8 @@ const styles = StyleSheet.create({
   linkMuted: { color: colors.muted, fontSize: 13 },
   link: { color: colors.primary, fontSize: 13, fontWeight: '800' },
   demoHint: { textAlign: 'center', color: colors.faint, fontSize: 11, marginTop: 14 },
+  serverToggle: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.borderLight, maxWidth: '100%' },
+  serverToggleText: { flex: 1, fontSize: 11, color: colors.muted, fontWeight: '600' },
+  serverBox: { backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.borderLight },
+  serverHint: { fontSize: 11, color: colors.faint, lineHeight: 16 },
 });
