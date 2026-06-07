@@ -15,16 +15,22 @@ export async function http<T = unknown>(path: string, opts: HttpOptions = {}): P
   const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 30000);
   const token = opts.auth === false ? null : getToken();
 
+  const fullUrl = `${getApiBaseUrl()}${path}`;
+  console.log(`[HTTP] ${opts.method ?? 'GET'} ${fullUrl}`);
   try {
-    const res = await fetch(`${getApiBaseUrl()}${path}`, {
+    const res = await fetch(fullUrl, {
       ...opts,
       signal: controller.signal,
       headers: {
-        'Content-Type': 'application/json',
+        // Content-Type yalnızca gerçekten gövde varken gönderilir; gövdesiz
+        // POST'larda application/json göndermek express.json()'ı boş/bozuk
+        // gövdeyi ayrıştırmaya zorlayıp 400 "Unexpected token" hatası veriyordu.
+        ...(opts.body != null ? { 'Content-Type': 'application/json' } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(opts.headers ?? {}),
       },
     });
+    console.log(`[HTTP] <- ${res.status} ${fullUrl}`);
 
     if (res.status === 401) {
       await clearToken();
@@ -43,7 +49,12 @@ export async function http<T = unknown>(path: string, opts: HttpOptions = {}): P
     }
 
     if (res.status === 204) return undefined as T;
-    return (await res.json()) as T;
+    const text = await res.text();
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      throw new Error(`Sunucu beklenmeyen yanıt döndü (${res.status}) @ ${getApiBaseUrl()}: ${text.slice(0, 140)}`);
+    }
   } catch (err: any) {
     if (err?.name === 'AbortError') throw new Error('İstek zaman aşımına uğradı');
     throw err;

@@ -1,6 +1,7 @@
 // Abonelik Paketleri — Tufan (6) — GET /api/subscriptions/plans
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../lib/auth/AuthContext';
@@ -27,7 +28,7 @@ export default function SubscriptionsScreen() {
   if (error) return <View style={styles.safe}><ScreenHeader title="Abonelik" onBack={() => router.back()} /><ErrorView message={error} /></View>;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader title="Abonelik Paketleri" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {plans.map((p) => {

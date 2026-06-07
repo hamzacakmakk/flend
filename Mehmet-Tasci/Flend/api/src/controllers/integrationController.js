@@ -1,6 +1,6 @@
 const supabase = require('../config/supabase');
 const { AppError } = require('../middleware/errorHandler');
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 const axios = require('axios');
 
 // 1. Tüm Entegrasyonları Getir
@@ -15,7 +15,7 @@ const getAllIntegrations = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// 2. Yeni Entegrasyon Oluştur (DÜZELTİLDİ: Artık base_url boş kalmaz)
+// 2. Yeni Entegrasyon Oluştur
 const createIntegration = async (req, res, next) => {
   try {
     const body = req.body || {};
@@ -48,7 +48,7 @@ const createIntegration = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// 3. Ortak Sync Fonksiyonu (DÜZELTİLDİ: Strategy Pattern Entegrasyonu)
+// 3. Ortak Sync Fonksiyonu
 const performSync = async (id) => {
   const { data: integration, error } = await supabase.from('integrations').select('*').eq('id', id).single();
   if (error || !integration) throw new AppError('Entegrasyon bulunamadı', 404);
@@ -64,7 +64,7 @@ const performSync = async (id) => {
   // Varsayılan veri eşleme (mapping) fonksiyonu
   let mappingFn = (p) => ({
     integration_id: id,
-    marketplace_product_id: String(p.id || p.barcode || p.sku || uuidv4()),
+    marketplace_product_id: String(p.id || p.barcode || p.sku || crypto.randomUUID()),
     title: p.name || p.title || p.productName || 'İsimsiz Ürün',
     barcode: p.barcode || '',
     sale_price: parseFloat(p.price || p.salePrice || p.listPrice || 0),
@@ -78,8 +78,6 @@ const performSync = async (id) => {
   // Strategy Pattern (Dinamik Konfigürasyon Bloğu)
   switch (true) {
     case marketplace.includes('trendyol'):
-      // Trendyol requires both Supplier ID (in URL) and API Key (in Auth). 
-      // User can input 'SupplierId:ApiKey' in the API Key field.
       const parts = integration.api_key.split(':');
       const supplierId = parts.length > 1 ? parts[0] : integration.api_key;
       const actualApiKey = parts.length > 1 ? parts[1] : integration.api_key;
@@ -88,7 +86,7 @@ const performSync = async (id) => {
       headers['Authorization'] = `Basic ${Buffer.from(`${actualApiKey}:${integration.api_secret || ''}`).toString('base64')}`;
       mappingFn = (p) => ({
         integration_id: id,
-        marketplace_product_id: String(p.barcode || uuidv4()),
+        marketplace_product_id: String(p.barcode || crypto.randomUUID()),
         title: p.title || 'Trendyol Ürünü',
         barcode: p.barcode || '',
         sale_price: parseFloat(p.salePrice || 0),
@@ -103,25 +101,17 @@ const performSync = async (id) => {
       headers['x-api-key'] = integration.api_key;
       mappingFn = (p) => ({
         integration_id: id,
-        marketplace_product_id: String(p.sku || uuidv4()),
+        marketplace_product_id: String(p.sku || crypto.randomUUID()),
         title: p.name || 'Hepsiburada Ürünü',
         barcode: p.barcode || '',
         sale_price: parseFloat(p.price || 0),
         stock_quantity: parseInt(p.stock || 0),
-        currency: 'TRY', // Hepsiburada varsayılan döviz birimi genelde TR'dir
+        currency: 'TRY',
         is_active: true
       });
       break;
 
-    // Yeni Pazaryeri Eklemek Çok Kolay:
-    // case marketplace.includes('amazon'):
-    //   finalUrl = `...`
-    //   headers['...'] = `...`
-    //   mappingFn = (p) => ({ ... })
-    //   break;
-
     default:
-      // Supabase / Test / Diğer (Varsayılan Davranış)
       if (baseUrl.includes('supabase.co')) {
         headers['apikey'] = integration.api_key;
         headers['Authorization'] = `Bearer ${integration.api_key}`;
@@ -155,7 +145,6 @@ const performSync = async (id) => {
   } catch (apiError) {
     const status = apiError.response?.status;
 
-    // Hata Yakalama (Özelleştirilmiş 401/403 yönetimi)
     if (status === 401 || status === 403) {
       throw new AppError('API Anahtarı Hatalı', status);
     }
@@ -178,7 +167,6 @@ const updateIntegration = async (req, res, next) => {
   try {
     const cleanId = req.params.id.trim();
 
-    // 1. ADIM: Sadece güncelle, Supabase'den hiçbir şey dönmesini bekleme (.single veya .select YOK)
     const { error } = await supabase
       .from('integrations')
       .update(req.body)
@@ -186,7 +174,6 @@ const updateIntegration = async (req, res, next) => {
 
     if (error) throw new AppError(error.message, 400);
 
-    // 2. ADIM: Acaba güncellendi mi? Gidip güncellenmiş veriyi liste olarak kendimiz çekelim
     const { data: checkData, error: getError } = await supabase
       .from('integrations')
       .select('*')
@@ -194,7 +181,6 @@ const updateIntegration = async (req, res, next) => {
 
     if (getError) throw new AppError(getError.message, 400);
 
-    // 3. ADIM: Liste boş döndüyse (yani veritabanında bu ID cidden yoksa) çökme, cevap dön
     if (!checkData || checkData.length === 0) {
       return res.status(404).json({
         success: false,
@@ -202,7 +188,6 @@ const updateIntegration = async (req, res, next) => {
       });
     }
 
-    // Her şey tamamsa listenin ilk elemanını (güncellenmiş veriyi) dön
     res.json({ success: true, data: checkData[0] });
   } catch (err) {
     next(err);

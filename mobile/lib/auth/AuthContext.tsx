@@ -5,6 +5,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { loadToken, saveToken, clearToken } from './tokenStore';
 import { loadApiBaseUrl } from '../config';
 import { login as apiLogin, register as apiRegister, getProfile } from '../api/auth';
+import { httpGet } from '../http';
 import type { User, RegisterInput } from '../api';
 
 interface AuthState {
@@ -31,7 +32,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(t);
       if (t) {
         try {
-          setUser(await getProfile());
+          // Kısa timeout: backend erişilemezse hızlıca login'e düş
+          setUser(await httpGet<User>('/api/users/profile', { timeoutMs: 5000 }));
         } catch {
           await clearToken();
           setToken(null);

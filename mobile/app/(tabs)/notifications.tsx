@@ -1,9 +1,10 @@
 // Bildirim sekmesi — Nurullah (27 liste, 28 alarm kuralı, 29 okundu, 30 sil)
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, RefreshControl,
+  View, Text, FlatList, TouchableOpacity, StyleSheet, StatusBar, RefreshControl,
   Modal, KeyboardAvoidingView, Platform, ScrollView, Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -73,7 +74,7 @@ export default function NotificationsTab() {
   const unread = items.filter((i) => !i.is_read).length;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
       <View style={styles.header}>
         <View>

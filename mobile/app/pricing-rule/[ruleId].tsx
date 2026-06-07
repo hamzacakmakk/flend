@@ -1,6 +1,7 @@
 // Fiyat Kuralı Düzenle/Sil — Kadir (23 güncelle, 24 sil)
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { getPricingRules, updatePricingRule, deletePricingRule, RuleType, RuleUnit } from '../../lib/api';
 import { colors } from '../../lib/theme';
@@ -60,7 +61,7 @@ export default function PricingRuleEditScreen() {
   if (loading) return <LoadingScreen text="Kural yükleniyor..." />;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader title="Kuralı Düzenle" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Card>

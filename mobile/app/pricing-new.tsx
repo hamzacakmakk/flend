@@ -1,6 +1,7 @@
 // Yeni Fiyat Kuralı — Kadir (19) — POST /api/pricing-rules
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { createPricingRule, RuleType, RuleUnit } from '../lib/api';
 import { colors } from '../lib/theme';
@@ -30,7 +31,7 @@ export default function PricingNewScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader title="Yeni Fiyat Kuralı" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Card>

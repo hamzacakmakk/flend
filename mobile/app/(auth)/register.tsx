@@ -1,6 +1,7 @@
 // Gereksinim 1 — Yeni Satıcı Hesabı Oluşturma (POST /api/auth/register)
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth/AuthContext';
 import { FormInput, PrimaryButton, ScreenHeader } from '../../components/ui';
@@ -38,7 +39,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader title="Kayıt Ol" subtitle="Yeni satıcı hesabı" onBack={() => router.back()} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">

@@ -1,0 +1,76 @@
+# ============================================
+# Flend Mobil Backend - docker-compose
+# Tek komutla: API + Worker + RabbitMQ + Redis ayağa kalkar.
+# WSL'e ayrıca RabbitMQ/Redis kurmaya gerek YOK; hepsi konteynerde.
+#
+#   docker compose up --build
+#
+# Servisler:
+#   - rabbitmq : mesaj kuyruğu broker'ı (yönetim paneli :15672)
+#   - redis    : iş durumu / önbellek deposu
+#   - api      : Express API (port 5001) -> işi kuyruğa atar (producer)
+#   - worker   : kuyruğu dinleyip senkronizasyonu yapan tüketici (consumer)
+# ============================================
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: flend-rabbitmq
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # Yönetim paneli (http://localhost:15672  guest/guest)
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: flend-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build: .
+    container_name: flend-api
+    ports:
+      - "5001:5001"
+    env_file:
+      - .env
+    environment:
+      # Broker adresleri konteyner ağındaki servis adlarına göre override edilir
+      NODE_ENV: production
+      QUEUE_DRIVER: rabbitmq
+      INLINE_WORKER: "false"   # worker ayrı servis olarak çalışıyor
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build: .
+    container_name: flend-worker
+    command: ["node", "worker.js"]
+    # Worker'ın HTTP portu yok; API'nin sağlık testi burada anlamsız, kapat.
+    healthcheck:
+      disable: true
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      QUEUE_DRIVER: rabbitmq
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy

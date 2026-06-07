@@ -1,7 +1,8 @@
 // Panel sekmesi — Nurullah (25 özet istatistik, 26 kampanya önerileri)
 // GET /api/dashboard/stats + GET /api/analytics/suggestions
 import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet, SafeAreaView, StatusBar, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, StatusBar, RefreshControl, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getDashboardStats, getSuggestions, DashboardStats, CampaignSuggestion } from '../../lib/api';
@@ -44,7 +45,7 @@ export default function DashboardTab() {
   if (error) return <View style={styles.safe}><ErrorView message={error} onRetry={() => load()} /></View>;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
       <View style={styles.header}>
         <View>

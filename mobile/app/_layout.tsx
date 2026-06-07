@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '../lib/auth/AuthContext';
 
 // Kök layout — tüm route'lar otomatik keşfedilir; başlık çubukları gizli.
@@ -6,8 +7,10 @@ import { AuthProvider } from '../lib/auth/AuthContext';
 // pricing-*, profile, subscriptions, integrations) bu Stack altında çalışır.
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }} />
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <Stack screenOptions={{ headerShown: false }} />
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

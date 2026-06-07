@@ -9,11 +9,11 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
-  SafeAreaView,
   StatusBar,
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getCompetitorHistory, DataPoint } from '../../lib/api';
@@ -43,7 +43,7 @@ export default function HistoryScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.centerBox}>
           <ActivityIndicator size="large" color="#6366f1" />
           <Text style={styles.loadingText}>Grafik çiziliyor...</Text>
@@ -53,7 +53,7 @@ export default function HistoryScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8fafc" />
 
       {/* Header */}

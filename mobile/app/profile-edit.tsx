@@ -1,6 +1,7 @@
 // Profil Düzenle — Tufan (4) — PUT /api/users/profile
 import React, { useState } from 'react';
-import { StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native';
+import { StyleSheet, ScrollView, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../lib/auth/AuthContext';
 import { updateProfile } from '../lib/api';
@@ -35,7 +36,7 @@ export default function ProfileEditScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader title="Profili Düzenle" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Card>

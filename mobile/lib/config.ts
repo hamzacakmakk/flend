@@ -18,7 +18,7 @@ function normalize(url: string): string {
 
 // app.json → extra.apiBaseUrl yalnızca İLK varsayılan; kullanıcı değiştirebilir.
 export const DEFAULT_API_BASE_URL = normalize(
-  (Constants.expoConfig?.extra?.apiBaseUrl as string | undefined) || 'http://10.67.236.7:5000'
+  (Constants.expoConfig?.extra?.apiBaseUrl as string | undefined) || 'http://10.0.2.2:5000'
 );
 
 let current = DEFAULT_API_BASE_URL;

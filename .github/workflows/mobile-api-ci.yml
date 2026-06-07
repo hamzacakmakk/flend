@@ -1,0 +1,110 @@
+# ============================================
+# Flend Mobil Backend - CI/CD Pipeline (GitHub Actions)
+# Mehmet Taşcı - Pazaryeri Entegrasyonu & Envanter Yönetimi
+#
+# Bu pipeline her push / pull request'te OTOMATIK çalışır:
+#   CI  -> bağımlılık kurulumu + sözdizimi/sağlık kontrolü + kuyruk testi
+#   CD  -> Docker imajını derler (build) ve doğrular
+#
+# Sadece mobile-api klasörü değiştiğinde tetiklenir (paths filtresi).
+# ============================================
+name: Mobil Backend CI/CD
+
+on:
+  push:
+    paths:
+      - "Mehmet-Tasci/Flend/mobile-api/**"
+      - ".github/workflows/mobile-api-ci.yml"
+  pull_request:
+    paths:
+      - "Mehmet-Tasci/Flend/mobile-api/**"
+      - ".github/workflows/mobile-api-ci.yml"
+  workflow_dispatch:   # Actions sekmesinden elle de çalıştırılabilir
+
+defaults:
+  run:
+    working-directory: Mehmet-Tasci/Flend/mobile-api
+
+jobs:
+  # ---------- CI: kur, doğrula, test et ----------
+  ci:
+    name: CI - Kurulum & Test
+    runs-on: ubuntu-latest
+
+    # Kuyruk testi için gerçek RabbitMQ + Redis servisleri (CI içinde)
+    services:
+      rabbitmq:
+        image: rabbitmq:3.13-alpine
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Kodu indir
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: Mehmet-Tasci/Flend/mobile-api/package-lock.json
+
+      - name: Bağımlılıkları kur (npm ci)
+        run: npm ci
+
+      - name: Sözdizimi kontrolü (tüm kaynak dosyaları derleniyor mu?)
+        run: |
+          for f in $(find src worker.js index.js -name "*.js"); do
+            node --check "$f"
+          done
+          echo "✅ Tüm JS dosyaları sözdizimi geçti"
+
+      - name: Kuyruk entegrasyon testi (RabbitMQ + Redis)
+        env:
+          QUEUE_DRIVER: rabbitmq
+          RABBITMQ_URL: amqp://guest:guest@127.0.0.1:5672
+          REDIS_URL: redis://127.0.0.1:6379
+        run: node ci/queue-smoke-test.js
+
+  # ---------- CD: Docker imajını derle & doğrula ----------
+  docker-build:
+    name: CD - Docker Build
+    runs-on: ubuntu-latest
+    needs: ci   # CI geçmeden imaj derlenmez
+    steps:
+      - name: Kodu indir
+        uses: actions/checkout@v4
+
+      - name: Docker Buildx kur
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker imajını derle
+        uses: docker/build-push-action@v6
+        with:
+          context: Mehmet-Tasci/Flend/mobile-api
+          push: false              # Şimdilik sadece derle (registry'ye gönderme)
+          tags: flend-mobile-api:ci-${{ github.sha }}
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: İmajın çalıştığını doğrula
+        run: |
+          docker run -d --name smoke -e VERCEL= -p 5001:5001 flend-mobile-api:ci-${{ github.sha }}
+          sleep 5
+          curl -fsS http://localhost:5001/api/health && echo "" && echo "✅ Konteyner sağlıklı"
+          docker rm -f smoke

@@ -1,7 +1,8 @@
 // Rakipler sekmesi — ürün listesi → /competitor/[productId] (Hamza akışı girişi)
 // GET /products
 import React, { useState, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, RefreshControl } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, StatusBar, RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getProducts, Product } from '../../lib/api';
@@ -35,7 +36,7 @@ export default function CompetitorsTab() {
   if (error) return <View style={styles.safe}><ErrorView message={error} onRetry={() => load()} /></View>;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
       <View style={styles.header}>
         <View>

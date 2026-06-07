@@ -38,7 +38,7 @@
       ]
     ],
     "extra": {
-      "apiBaseUrl": "http://10.67.236.7:5000",
+      "apiBaseUrl": "http://10.0.2.2:5000",
       "router": {
         "origin": false
       },

@@ -1,6 +1,7 @@
 // Kural Atama — Kadir (20) — POST /api/pricing-rules/:ruleId/assign
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, SafeAreaView, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getProducts, assignPricingRule, Product } from '../lib/api';
@@ -42,7 +43,7 @@ export default function PricingAssignScreen() {
   if (loading) return <LoadingScreen text="Ürünler yükleniyor..." />;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader title="Kural Ata" subtitle={ruleName ? String(ruleName) : 'Hedef ürünleri seçin'} onBack={() => router.back()} />
       <FlatList
         data={products}

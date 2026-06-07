@@ -1,7 +1,8 @@
 // Kurallar sekmesi — Kadir (21 listeleme) → /pricing-new, /pricing-rule/[id], /pricing-assign
 // GET /api/pricing-rules
 import React, { useState, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, RefreshControl } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, StatusBar, RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getPricingRules, PricingRule } from '../../lib/api';
@@ -35,7 +36,7 @@ export default function PricingTab() {
   if (error) return <View style={styles.safe}><ErrorView message={error} onRetry={() => load()} /></View>;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
       <View style={styles.header}>
         <View>

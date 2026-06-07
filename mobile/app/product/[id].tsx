@@ -1,6 +1,7 @@
 // Ürün Detay — Mehmet (9 detay, 10 min fiyat, 12 sil) + Kadir (22 optimum öneri)
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import {
   getInventoryProduct, updateMinPrice, deleteInventoryProduct, getOptimumPrice,
@@ -76,7 +77,7 @@ export default function ProductDetailScreen() {
   if (error || !product) return <View style={styles.safe}><ScreenHeader title="Ürün" onBack={() => router.back()} /><ErrorView message={error || 'Bulunamadı'} onRetry={load} /></View>;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader title="Ürün Detayı" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Card>
