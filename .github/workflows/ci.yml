@@ -1,0 +1,74 @@
+name: Flend CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # ── Backend: kurulum + sözdizimi + canlı Postgres ile SQL şema doğrulaması ──
+  backend-ci:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: flend
+          POSTGRES_PASSWORD: flend
+          POSTGRES_DB: flend
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U flend"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Bağımlılıkları kur
+        working-directory: backend
+        run: npm install --no-audit --no-fund
+      - name: Sözdizimi kontrolü
+        working-directory: backend
+        run: |
+          node --check index.js
+          node --check worker.js
+          node --check kafkaConsumer.js
+      - name: Şema + seed yükle (SQL doğrulaması)
+        env:
+          PGPASSWORD: flend
+        run: |
+          psql -h localhost -U flend -d flend -f backend/db/schema.sql
+          psql -h localhost -U flend -d flend -f backend/db/seed.sql
+          psql -h localhost -U flend -d flend -c "SELECT count(*) FROM products;"
+
+  # ── Mobil: TypeScript tip kontrolü ──────────────────────────────────────
+  mobile-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Bağımlılıkları kur
+        working-directory: mobile
+        run: npm install --no-audit --no-fund
+      - name: TypeScript kontrolü
+        working-directory: mobile
+        run: npx tsc --noEmit
+
+  # ── Docker: compose doğrula + backend image build ───────────────────────
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [backend-ci]
+    steps:
+      - uses: actions/checkout@v4
+      - name: docker-compose doğrula
+        run: docker compose config
+      - name: Backend image build
+        run: docker build -t flend-backend ./backend

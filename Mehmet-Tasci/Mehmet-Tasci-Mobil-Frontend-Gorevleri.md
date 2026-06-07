@@ -1,44 +1,32 @@
 # Mehmet Taşcı'nın Mobil Frontend Görevleri
-**Mobile Front-end Demo Videosu:** [Link buraya eklenecek](https://example.com)
 
-## 1. Pazaryeri Entegrasyon Ekranı
-- **UI Görevi:** Satıcının mağazasını sisteme bağlaması için gerekli API Key/Secret form ekranını tasarlama ve geliştirme.
-- **Bileşenler:** 
-  - API Key giriş alanı
-  - Secret Key giriş alanı
-  - Pazaryeri Seçici (Trendyol, Amazon vb.)
-  - Kaydet butonu
+**Mobil Front-end Demo Videosu:** [Link buraya eklenecek](https://example.com)
 
-## 2. Satıcı Ürün Listesi Ekranı
-- **UI Görevi:** Entegre pazaryerinden çekilen satıcı ürünlerinin bir listesini tasarlama ve ListView / RecyclerView / LazyColumn gibi bileşenlerle gösterme.
-- **Bileşenler:** 
-  - Ürün resimli liste/kart görünümü
-  - Minimalist ürün adı ve fiyat bilgisi gösterimi
-  - Refresh indicator (yukarıdan çekince ürünleri güncelleme)
-  - Floating action button (bağlantı ayarlarına kısa yol vb.)
+> Tüm ekranlar tek birleşik uygulamada: `mobile/` (Expo Router, SDK 56). Sorumluluk: Pazaryeri entegrasyonu ve envanter arayüzleri.
 
-## 3. Ürün Detay Aksiyon Sayfası
-- **UI Görevi:** Seçilen ürünün stok adetlerinin ve detaylı mevcut satış fiyatlarının gösterildiği ekran tasarımı.
-- **Bileşenler:** 
-  - Stok durumu ilerleme çubuğu/göstergesi
-  - Güncel fiyat metni
-  - Geri butonu, ürün isim kartı
+## 1. Pazaryeri Entegrasyonu Ekleme Ekranı
+- **Ekran:** `mobile/app/integrations.tsx`
+- **Bileşenler:** `FormInput`, `PrimaryButton`
+- **İşlev:** Pazaryeri adı + API Key/Secret formu ile yeni entegrasyon ekleme.
 
-## 4. Minimum Fiyat (Taban Fiyat) Güncelleme Modal'ı
-- **UI Görevi:** Zarar etmemek adına uygulanan "Minimum Satış Fiyatı"nı düzenlemek için kullanılacak alt pencere (Bottom Sheet) formunun tasarlanması.
-- **Bileşenler:**
-  - Mevcut alt limiti gösteren metin
-  - Yeni limit girmek için sayısal klavye açılan input alanı
-  - Kaydet ve İptal butonları
+## 2. Ürün Listesi (Envanter) Ekranı
+- **Ekran:** `mobile/app/(tabs)/products.tsx`
+- **İşlev:** Kullanıcının ürünlerini fiyat, stok, min-fiyat ve pazaryeri rozetiyle listeleme; pull-to-refresh; entegrasyon ekranına kısayol.
 
-## 5. Bağlantı Bilgilerini Yenileme Görüntüsü
-- **UI Görevi:** Süresi dolmuş tokenlar için entegrasyon ayarları form ekranı.
-- **Bileşenler:**
-  - Durum (Aktif/Pasif/Token Süresi Dolmuş) uyarı mesajları
-  - Formu tekrar doldurmak için input alanları
+## 3. Tekil Ürün Detay Ekranı
+- **Ekran:** `mobile/app/product/[id].tsx`
+- **Bileşenler:** `Card`, `Badge`
+- **İşlev:** Ürün adı, fiyat, stok, barkod, pazaryeri ve optimum-fiyat önerisinin gösterimi.
 
-## 6. Envanterden Sil / Takipten Çıkar UI İşlevi
-- **UI Görevi:** Ürünün listeden çıkarılması için kaydırma veya onay dialog'u tasarlama.
-- **Bileşenler:**
-  - Öğeyi silmek için Swipe-to-Delete (kaydırarak silme)
-  - "Bu ürünün takibini bırakmak istediğinize emin misiniz?" Alert Dialog
+## 4. Minimum Fiyat Güncelleme Alanı
+- **Ekran:** `mobile/app/product/[id].tsx` (min-fiyat kartı)
+- **Bileşenler:** `FormInput` (numeric), `PrimaryButton`
+- **İşlev:** Maliyet eşiğini (min satış fiyatı) düzenleme.
+
+## 5. Pazaryeri API Bilgileri Güncelleme
+- **Ekran:** `mobile/app/integrations.tsx` (entegrasyon kartı — Durum)
+- **İşlev:** Entegrasyon durumunu (aktif/pasif) ve API bilgilerini güncelleme; "Ürün Çek" ile senkronizasyon.
+
+## 6. Ürün Silme (Envanterden Kaldırma)
+- **Ekran:** `mobile/app/product/[id].tsx` (Sil butonu + onay)
+- **İşlev:** Ürünü envanterden kaldırma (soft delete) onay diyaloğu.

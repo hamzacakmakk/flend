@@ -1,45 +1,31 @@
-# Tufan'ın Mobil Frontend Görevleri
-**Mobile Front-end Demo Videosu:** [Link buraya eklenecek](https://example.com)
+# Tufan Akbaş'ın Mobil Frontend Görevleri
 
-## 1. Satıcı Kayıt (Register) Ekranı
-- **UI Görevi:** Sisteme yeni katılacak e-ticaret firmaları için kayıt formu arayüzünü tasarlama.
-- **Bileşenler:** 
-  - Ad, Soyad, E-posta ve Şifre giriş alanları
-  - Form validasyon uyarıları
-  - Kayıt Ol butonu
-  - Mevcut hesaba giriş yönlendirme linki
+**Mobil Front-end Demo Videosu:** [Link buraya eklenecek](https://example.com)
 
-## 2. Satıcı Giriş (Login) Ekranı
-- **UI Görevi:** Satıcıların e-posta ve şifre ile sisteme giriş yapabileceği ekran.
-- **Bileşenler:** 
-  - E-posta ve Şifre giriş alanları
-  - "Şifremi Unuttum" linki
-  - Giriş Yap butonu
-  - API'den dönen hatalar için snackbar/toast mesajı
+> Tüm ekranlar tek birleşik uygulamada: `mobile/` (Expo Router, SDK 56). Sorumluluk: Kullanıcı kimlik doğrulama, profil ve abonelik arayüzleri.
 
-## 3. Profil ve Mevcut Abonelik Görüntüleme Sayfası
-- **UI Görevi:** Satıcının kendi bilgilerini ve aktif abonelik detaylarını inceleyebileceği profil sayfası.
-- **Bileşenler:** 
-  - Kullanıcı avatarı, adı ve e-posta etiketi
-  - Aktif abonelik paketi durumu (Rozet / Badge)
-  - Ayarlar menüsü liste görünümü
+## 1. Kayıt Ekranı (Register)
+- **Ekran:** `mobile/app/(auth)/register.tsx`
+- **Bileşenler:** `FormInput`, `PrimaryButton` (`components/ui`)
+- **İşlev:** Firma adı, ad-soyad, e-posta, telefon, parola formu; başarıda otomatik giriş + panele yönlendirme.
 
-## 4. Profil ve Şifre Düzenleme Formu
-- **UI Görevi:** Kullanıcıların isim, iletişim bilgileri veya şifrelerini değiştirebileceği form ekranı.
-- **Bileşenler:**
-  - Mevcut değerleri içeren doldurulmuş giriş alanları
-  - Şifre güncellemesi için eski/yeni şifre alanları
-  - Kaydet butonu ve başarı durum uyarısı
+## 2. Giriş Ekranı (Login)
+- **Ekran:** `mobile/app/(auth)/login.tsx`
+- **İşlev:** E-posta/parola ile giriş, JWT alımı, demo kullanıcı ipucu (demo@flend.com / demo1234), hata gösterimi.
 
-## 5. Hesap Silme / Dondurma Onay Dialog'u
-- **UI Görevi:** Kullanıcının hesabı silmek/dondurmak istediğinde karşılaşacağı güvenlik prosedürü ve onay ekranı.
-- **Bileşenler:**
-  - "Hesabınızı silmek istediğinize emin misiniz?" Alert Dialog
-  - İptal ve Onay (Kırmızı renkli - tehlikeli işlem) butonları
+## 3. Profil & Abonelik Görüntüleme
+- **Ekran:** `mobile/app/profile.tsx`
+- **Bileşenler:** `Card`, `Badge`
+- **İşlev:** Firma/yetkili/telefon bilgileri ve mevcut abonelik paketinin rozet ile gösterimi; alt menü (düzenle, abonelik, pazaryeri, dondur, çıkış).
 
-## 6. SaaS Abonelik Paketleri Listesi
-- **UI Görevi:** Mevcut abonelik planlarının (Aylık/Yıllık) satın alınmak üzere listelenmesi.
-- **Bileşenler:**
-  - Paketlerin kart şeklinde (Fiyat, özellikler) yana/aşağı kaydırılabilir görünümü
-  - Satın Al/Abone Ol butonları
-  - "Aktif Paket" göstergesi
+## 4. Profil / Şifre Düzenleme
+- **Ekran:** `mobile/app/profile-edit.tsx`
+- **İşlev:** Mevcut bilgilerle dolu form; firma adı, ad-soyad, telefon ve opsiyonel yeni parola güncelleme.
+
+## 5. Hesabı Dondurma / Silme
+- **Ekran:** `mobile/app/profile.tsx` (onay diyaloğu)
+- **İşlev:** Onay sonrası hesabın dondurulması ve oturumun kapatılarak giriş ekranına dönüş.
+
+## 6. Abonelik Paketleri Ekranı
+- **Ekran:** `mobile/app/subscriptions.tsx`
+- **İşlev:** Free / Pro Aylık / Pro Yıllık paketlerinin fiyat, periyot ve özellik listesiyle kartlar halinde sunumu; mevcut planın vurgulanması.

@@ -1,39 +1,31 @@
 # Nurullah Turgut'un Mobil Frontend Görevleri
 
-**Mobile Front-end Demo Videosu:** 
+**Mobil Front-end Demo Videosu:** [Link buraya eklenecek](https://example.com)
 
-## Dashboard, Analitik ve Bildirim Sorumlusu (Analytics & Alerts)
+> Tüm ekranlar tek birleşik uygulamada: `mobile/` (Expo Router, SDK 56). Sorumluluk: Panel (dashboard), analitik ve bildirim arayüzleri.
 
-## 1. Ana Sayfa (Dashboard) Ekranı
-- **UI Görevi:** Dashboard ana sayfası için özet istatistiklerin (BuyBox kazanma oranı, toplam takip edilen ürün) modern kart görünümleriyle oluşturulması.
-- **Bileşenler:**
-  - Skorları vurgulayan Card tasarımları
-  - İlerleme grafikleri (Pie/Doughnut charts) özelliği.
+## 1. Ana Panel (Dashboard) Ekranı
+- **Ekran:** `mobile/app/(tabs)/dashboard.tsx`
+- **Bileşenler:** `StatCard`, `Card`
+- **İşlev:** BuyBox kazanma oranı, takip edilen ürün, toplam satış, aktif kampanya ve ciro kartları.
 
-## 2. Algoritmik Kampanya Önerileri Ekranı
-- **UI Görevi:** Analitik algoritmalardan "Stok Eritme / Kampanya Önerileri" liste ekranını tasarlama.
-- **Bileşenler:**
-  - Scrollable list item'lar
-  - "Uygula" aksiyon butonları ile kısa ürün resmi, ismi ve öneri metni (Badge) içeren kartlar.
+## 2. Kampanya / Stok Eritme Önerileri
+- **Ekran:** `mobile/app/(tabs)/dashboard.tsx` (öneriler bölümü)
+- **İşlev:** Önerileri öncelik rozetleri (kritik/yüksek) ve önerilen indirim oranıyla listeleme.
 
 ## 3. Bildirim Merkezi Ekranı
-- **UI Görevi:** Geçmiş bildirimleri (Rakip stok bitirdi, Fiyat tabana ulaştı) liste olarak sunan Notification Activity/Fragment'ı oluşturma.
-- **Bileşenler:**
-  - Okunan bildirimlerin açık renk, okunmayanların kalın renk/yazı tipinde (Bold) olduğu Lazy Column.
-  - Bildirim ikonu ve üzerinde badge göstergeleri.
+- **Ekran:** `mobile/app/(tabs)/notifications.tsx`
+- **İşlev:** Bildirimleri tipe göre ikon/renkle; okunmamışlar kalın, okunmuşlar soluk gösterilir.
 
-## 4. Kural / Alarm Ekleme Modal'ı
-- **UI Görevi:** Belirli durumlar için ("Rakip fiyatı %10 düşerse uyar") alarm oluşturma formunu tasarlama.
-- **Bileşenler:**
-  - Tetiklenecek olayı belirlemek için SelectBox / Dropdown listeler.
-  - Gerekli eşik(threshold) değerleri için NumberInput alanı.
+## 4. Alarm / Kural Ekleme Modal'ı
+- **Bileşen:** `notifications.tsx → AlertRuleModal`
+- **Bileşenler:** `OptionPicker` (tetikleyici), `FormInput` (eşik), `PrimaryButton`
+- **İşlev:** "Rakip fiyatı %10 düşerse uyar" gibi alarm kuralı oluşturma.
 
 ## 5. Bildirim Okundu Etkileşimi
-- **UI Görevi:** Kullanıcının mevcut bildirimin üzerine dokunmasıyla, durumunun UI üzerinde anlık olarak "Okundu"ya çekilmesi.
-- **Bileşenler:**
-  - Tıklama (onTap) animasyonu ile fon rengi değiştirme özelliği.
+- **Ekran:** `notifications.tsx` (onPress)
+- **İşlev:** Dokunulan bildirimin durumunun anında (optimistic) "okundu"ya çekilmesi.
 
-## 6. Bildirimi Sil/Temizle Etkileşimi
-- **UI Görevi:** Gereksiz veya eski bildirimi listeden atmak için "Swipe to Delete" fonksiyonalitesini geliştirme.
-- **Bileşenler:**
-  - Yana kaydırırken arkadan çıkan kırmızılı "Çöp Kutusu" ikonu ve animasyonlu silinme hissiyatı.
+## 6. Bildirim Silme Etkileşimi
+- **Ekran:** `notifications.tsx` (çöp kutusu butonu)
+- **İşlev:** Bildirimi listeden anında kaldırma (optimistic, hata olursa geri alma).

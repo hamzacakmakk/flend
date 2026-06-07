@@ -1,45 +1,35 @@
-# Tufan'ın Mobil Backend Görevleri
+# Tufan Akbaş'ın Mobil Backend Görevleri
+
 **Mobil Front-end ile Back-end Bağlanmış Test Videosu:** [Link buraya eklenecek](https://example.com)
 
-## 1. Yeni Satıcı Hesabı Oluşturma (Register) Servisi
-- **API Endpoint:** `POST /api/auth/register`
-- **Görev:** Sisteme yeni bir satıcının (e-ticaret firmasının) kayıt olmasını sağlama.
-- **İşlevler:**
-  - Kullanıcı kayıt bilgileri için istek modelini oluşturma (Ad, Soyad, E-posta, Şifre vb.).
-  - Güvenlik ve validasyon kontrollerinden sonra veritabanına kaydetme.
-  - Hata durumlarını (400 Bad Request, Email Already Exists) yakalama.
+> Birleşik backend: `backend/` (Express + PostgreSQL, JWT). Mobil istemci: `mobile/lib/api/auth.ts` (token: `mobile/lib/auth/`). Mobilden API'ye giden isteğin ve dönen sonucun ekrana yansıdığı net görünmelidir.
 
-## 2. Satıcı Girişi (Login) Servisi
-- **API Endpoint:** `POST /api/auth/login`
-- **Görev:** Kayıtlı satıcının sisteme giriş yapması ve oturum açması.
-- **İşlevler:**
-  - E-posta ve şifre doğrulaması yapma.
-  - Başarılı girişte JWT (JSON Web Token) üretme ve dönme.
-  - Hatalı giriş denemelerinde (401 Unauthorized) yanıt dönme.
+## 1. Yeni Satıcı Hesabı Oluşturma Servisi
+- **Endpoint:** `POST /api/auth/register`
+- **İstemci:** `register()` → `mobile/lib/api/auth.ts`
+- **Controller:** `backend/controllers/authController.js → register` (bcrypt hash + JWT üretimi)
 
-## 3. Profil ve Abonelik Bilgilerini Getirme Servisi
-- **API Endpoint:** `GET /api/users/profile`
-- **Görev:** Giriş yapmış olan satıcının profil detaylarını ve hangi abonelik paketini kullandığını getirme.
-- **İşlevler:**
-  - Token tabanlı yetkilendirme (Bearer Token) ile çağrı atma.
-  - Kullanıcı bilgilerini ve aktif abonelik nesnesini dönüştürerek iletme.
+## 2. Satıcı Girişi (JWT) Servisi
+- **Endpoint:** `POST /api/auth/login`
+- **İstemci:** `login()` → `AuthContext.signIn` token'ı `expo-secure-store`'a yazar
+- **Controller:** `authController.js → login` (`bcrypt.compare` + `jwt.sign`)
 
-## 4. Profil ve Şifre Güncelleme Servisi
-- **API Endpoint:** `PUT /api/users/profile`
-- **Görev:** Satıcının var olan profil ve şifre bilgilerini değiştirmesi.
-- **İşlevler:**
-  - Şifre ve diğer bilgilerin değişim isteklerini karşılama.
-  - Başarılı güncellemede kullanıcıya yanıt dönme.
+## 3. Profil & Abonelik Getirme Servisi
+- **Endpoint:** `GET /api/users/profile` (Bearer zorunlu)
+- **İstemci:** `getProfile()`
+- **Controller:** `authController.js → getProfile` (paket join)
 
-## 5. Satıcı Hesabı Silme veya Dondurma Servisi
-- **API Endpoint:** `DELETE /api/users/account`
-- **Görev:** Kullanıcının hesabı kalıcı olarak silmesi veya dondurması işlemi.
-- **İşlevler:**
-  - Kullanıcı onayından sonra hesabı silme/pasife alma çağrısı yapma.
-  - Başarılı dönüşle mobil arayüzde oturumu sonlandırma.
+## 4. Profil / Şifre Güncelleme Servisi
+- **Endpoint:** `PUT /api/users/profile`
+- **İstemci:** `updateProfile()`
+- **Controller:** `authController.js → updateProfile` (kısmi güncelleme, parola yeniden hash)
 
-## 6. SaaS Abonelik Paketlerini Listeleme Servisi
-- **API Endpoint:** `GET /api/subscriptions/plans`
-- **Görev:** Sistemde kullanılabilecek olan Aylık/Yıllık abonelik paketlerini listeleme.
-- **İşlevler:**
-  - Abonelik planlarını veritabanından çekip liste formatında JSON olarak sunma.
+## 5. Hesap Dondurma / Silme Servisi
+- **Endpoint:** `DELETE /api/users/account` (`?hard=true` kalıcı sil)
+- **İstemci:** `deleteAccount()`
+- **Controller:** `authController.js → deleteAccount` (status = frozen)
+
+## 6. Abonelik Paketlerini Listeleme Servisi
+- **Endpoint:** `GET /api/subscriptions/plans` (auth'suz)
+- **İstemci:** `getSubscriptionPlans()`
+- **Controller:** `authController.js → listPackages`

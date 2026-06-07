@@ -51,3 +51,47 @@ Proje dokümantasyonuna aşağıdaki linklerden erişebilirsiniz:
 5. [Mobil Front-End](MobilFrontEnd.md)
 6. [Mobil Backend](MobilBackEnd.md)
 7. [Video Sunum](Sunum.md)
+
+---
+
+## Tek Ürün — Mimari
+
+Proje, 30 gereksinimin tamamını kapsayan **tek bir mobil uygulama** ile bunu besleyen **tek bir birleşik REST API**'den oluşur:
+
+```
+flend/
+├── backend/   → Birleşik REST API (Express + PostgreSQL + Redis + RabbitMQ + Kafka)
+├── mobile/    → Birleşik mobil uygulama (React Native / Expo Router, SDK 56)
+└── <üye>/     → Üyelerin bireysel web frontend çalışmaları + görev dokümanları
+```
+
+## Kurulum ve Çalıştırma (Yerel Demo)
+
+> Gereksinimler: Docker Desktop, Node.js 20+, (mobil için) Expo Go uygulaması veya bir emülatör.
+
+**1) Altyapı + veritabanı** (repo kökünde) — şema ve demo veri otomatik yüklenir:
+```bash
+docker compose up -d            # postgres, redis, rabbitmq, zookeeper, kafka
+```
+
+**2) Backend** (yeni terminal):
+```bash
+cd backend
+npm install
+npm start                       # http://localhost:5000  (sağlık: /health)
+npm run worker                  # (ayrı terminal) RabbitMQ tüketici + Kafka üretici
+npm run kafka-consumer          # (ayrı terminal, opsiyonel) Kafka olay günlüğü
+```
+
+**3) Mobil** (yeni terminal):
+```bash
+cd mobile
+npm install
+# app.json → expo.extra.apiBaseUrl değerini bilgisayarınızın LAN IP'siyle güncelleyin
+#   (ipconfig ile öğrenin; örn. http://192.168.1.50:5000). Cihazda localhost ÇALIŞMAZ.
+npx expo start                  # QR ile Expo Go veya emülatörde açın
+```
+
+**Demo girişi:** `demo@flend.com` / `demo1234` (veya yeni hesap oluşturun).
+
+Alternatif: her şeyi container'da çalıştırmak için `docker compose --profile full up`.
