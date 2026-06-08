@@ -1,11 +1,12 @@
 import { Tabs, Redirect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import type { ColorValue } from 'react-native';
 import { useAuth } from '../../lib/auth/AuthContext';
 import { colors } from '../../lib/theme';
 import { LoadingScreen } from '../../components/ui';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
-const icon = (name: IconName) => ({ color, size }: { color: string; size: number }) =>
+const icon = (name: IconName) => ({ color, size }: { color: ColorValue; size: number }) =>
   <Ionicons name={name} color={color} size={size} />;
 
 export default function TabsLayout() {
