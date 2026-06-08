@@ -50,3 +50,7 @@ Thumbs.db
 pg_data/
 redis_data/
 rabbitmq_data/
+
+# cloudflared tunel log ciktilari
+cloudflared-quick.log
+cloudflared-quick.log.out

@@ -17,6 +17,7 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: flend_postgres
+    restart: unless-stopped
     environment:
       POSTGRES_USER: flend
       POSTGRES_PASSWORD: flend
@@ -37,6 +38,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: flend_redis
+    restart: unless-stopped
     ports:
       - '6379:6379'
     volumes:
@@ -52,6 +54,7 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: flend_rabbitmq
+    restart: unless-stopped
     ports:
       - '5672:5672'    # AMQP
       - '15672:15672'  # Management UI → http://localhost:15672 (guest/guest)
@@ -67,6 +70,7 @@ services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: flend_zookeeper
+    restart: unless-stopped
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -77,6 +81,7 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: flend_kafka
+    restart: unless-stopped
     depends_on:
       - zookeeper
     ports:
@@ -101,6 +106,10 @@ services:
     build: ./backend
     container_name: flend_api
     profiles: ['full']
+    restart: unless-stopped
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -122,6 +131,10 @@ services:
     build: ./backend
     container_name: flend_worker
     profiles: ['full']
+    restart: unless-stopped
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     depends_on:
       postgres: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
@@ -137,6 +150,7 @@ services:
     build: ./backend
     container_name: flend_kafka_consumer
     profiles: ['full']
+    restart: unless-stopped
     depends_on:
       kafka: { condition: service_started }
     environment:

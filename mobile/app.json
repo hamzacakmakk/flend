@@ -38,7 +38,7 @@
       ]
     ],
     "extra": {
-      "apiBaseUrl": "http://10.0.2.2:5000",
+      "apiBaseUrl": "https://framed-willow-past-fewer.trycloudflare.com",
       "router": {
         "origin": false
       },
