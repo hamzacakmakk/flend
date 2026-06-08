@@ -11,6 +11,7 @@ import 'dotenv/config';
 import amqplib from 'amqplib';
 import { query } from './db/pool.js';
 import { initKafkaProducer, publishPriceEvent, disconnectKafka, isKafkaReady } from './infra/kafka.js';
+import { runIntegrationSync } from './controllers/integrationController.js';
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://localhost';
 const SYNC_QUEUE = process.env.RABBITMQ_SYNC_QUEUE || 'sync_jobs';
@@ -19,6 +20,15 @@ await initKafkaProducer();
 
 // ── Sync iş mantığı ──────────────────────────────────────────────────────
 async function processSyncJob(jobPayload) {
+  // Pazaryeri eklendiğinde bırakılan ürün-senkron işi
+  if (jobPayload?.type === 'integration_sync') {
+    console.log(`\n📦 [Worker] Entegrasyon ürün senkronu başladı: ${jobPayload.marketplace || jobPayload.integrationId}`);
+    const { count, source } = await runIntegrationSync(jobPayload.userId, jobPayload.integrationId);
+    console.log(`✅ [Worker] ${count} ürün senkronlandı (kaynak: ${source})\n`);
+    return count;
+  }
+
+  // Varsayılan: rakip fiyat senkronu (eski davranış)
   console.log('\n🔄 [Worker] Sync job başladı:', jobPayload);
 
   const { rows: competitors } = await query('SELECT * FROM competitors WHERE is_active = true');

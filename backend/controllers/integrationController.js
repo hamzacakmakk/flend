@@ -10,6 +10,7 @@
 import { query } from '../db/pool.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { invalidateCache } from '../infra/redis.js';
+import { sendSyncJob, isRabbitReady } from '../infra/rabbitmq.js';
 
 function resolveBaseUrl(marketplace_name, base_url) {
   if (base_url) return base_url;
@@ -36,7 +37,23 @@ export async function createIntegration(req, res, next) {
        RETURNING *`,
       [req.user.id, marketplace_name, api_key, api_secret || null, final_base_url]
     );
-    res.status(201).json(rows[0]);
+    const integration = rows[0];
+
+    // Pazaryeri eklenince ürün senkronunu RabbitMQ'ya bırak (async).
+    // Worker "integration_sync" işini tüketip ürünleri çeker. Kuyruk yoksa
+    // sorun değil — kullanıcı daha sonra POST /:id/sync ile manuel tetikleyebilir.
+    let syncQueued = false;
+    if (isRabbitReady()) {
+      syncQueued = sendSyncJob({
+        type: 'integration_sync',
+        integrationId: integration.id,
+        userId: req.user.id,
+        marketplace: marketplace_name,
+        triggeredAt: new Date().toISOString(),
+      });
+    }
+
+    res.status(201).json({ ...integration, syncQueued });
   } catch (err) {
     next(err);
   }
@@ -144,66 +161,73 @@ function buildCatalogUrl(baseUrl, apiKey) {
   return url;
 }
 
-// 8 (mekanizma). POST /api/integrations/:id/sync
-// Ürünleri entegrasyonun KAYNAK Supabase DB'sinden (base_url + api_key) GERÇEKTEN
-// çeker ve ana DB'deki products tablosuna upsert eder.
+// 8 (çekirdek). Bir entegrasyonun ürünlerini KAYNAK Supabase DB'sinden
+// (base_url + api_key) GERÇEKTEN çeker ve ana DB'deki products tablosuna upsert
+// eder. Hem HTTP route'u (syncProducts) hem de RabbitMQ worker'ı bunu çağırır;
+// req/res'e bağlı değildir (worker'dan çağrılabilsin diye).
+export async function runIntegrationSync(userId, integrationId) {
+  const { rows: ints } = await query(
+    'SELECT * FROM integrations WHERE id = $1 AND user_id = $2',
+    [integrationId, userId]
+  );
+  const integration = ints[0];
+  if (!integration) throw new AppError('Entegrasyon bulunamadı', 404);
+
+  const mp = integration.marketplace_name;
+  const apiKey = integration.api_key;
+  if (!apiKey) throw new AppError('Entegrasyonda api_key (Supabase anon key) tanımlı değil', 400);
+
+  // Kaynak Supabase products tablosunu REST ile çek
+  const catalogUrl = buildCatalogUrl(integration.base_url, apiKey);
+  let resp;
+  try {
+    resp = await fetch(catalogUrl, {
+      headers: { apikey: apiKey, Authorization: `Bearer ${apiKey}`, Accept: 'application/json' },
+    });
+  } catch (e) {
+    throw new AppError(`Kaynak Supabase'e ulaşılamadı: ${e.message}`, 502);
+  }
+  if (!resp.ok) {
+    const body = await resp.text().catch(() => '');
+    throw new AppError(`Kaynak Supabase hatası (${resp.status}): ${body.slice(0, 200)}`, 502);
+  }
+  const remote = await resp.json();
+  if (!Array.isArray(remote)) throw new AppError('Kaynak Supabase beklenen ürün dizisini döndürmedi', 502);
+
+  // Kaynaktaki alan adlarını ana DB şemasına eşle (esnek isimlendirme)
+  const catalog = remote.map((r) => ({
+    sku:   r.marketplace_product_id ?? r.sku ?? r.id,
+    name:  r.name ?? r.title ?? 'İsimsiz ürün',
+    price: Number(r.price ?? r.sale_price ?? r.current_price ?? 0),
+    stock: Number(r.stock_quantity ?? r.stock ?? 0),
+    currency: r.currency ?? 'TRY',
+    barcode:  r.barcode ?? null,
+  })).filter((p) => p.sku);   // SKU'su olmayan kayıtları atla (upsert anahtarı)
+
+  let count = 0;
+  for (const p of catalog) {
+    await query(
+      `INSERT INTO products (user_id, integration_id, name, marketplace_product_id, barcode, price, stock_quantity, currency, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
+       ON CONFLICT (marketplace_product_id)
+       DO UPDATE SET name = EXCLUDED.name, barcode = EXCLUDED.barcode,
+                     price = EXCLUDED.price, stock_quantity = EXCLUDED.stock_quantity,
+                     integration_id = EXCLUDED.integration_id, is_active = true, updated_at = now()`,
+      [userId, integrationId, p.name, String(p.sku), p.barcode, p.price, p.stock, p.currency]
+    );
+    count++;
+  }
+  // Hem envanter (Mehmet) hem rakip-takibi ürün listesi (Hamza) cache'ini temizle
+  await invalidateCache(`inventory:${userId}`, `products:${userId}`);
+  return { count, marketplace: mp, source: catalogUrl };
+}
+
+// 8 (mekanizma). POST /api/integrations/:id/sync — HTTP sarmalayıcı
 export async function syncProducts(req, res, next) {
   try {
     const id = String(req.params.id).trim();
-    const { rows: ints } = await query(
-      'SELECT * FROM integrations WHERE id = $1 AND user_id = $2',
-      [id, req.user.id]
-    );
-    const integration = ints[0];
-    if (!integration) throw new AppError('Entegrasyon bulunamadı', 404);
-
-    const mp = integration.marketplace_name;
-    const apiKey = integration.api_key;
-    if (!apiKey) throw new AppError('Entegrasyonda api_key (Supabase anon key) tanımlı değil', 400);
-
-    // Kaynak Supabase products tablosunu REST ile çek
-    const catalogUrl = buildCatalogUrl(integration.base_url, apiKey);
-    let resp;
-    try {
-      resp = await fetch(catalogUrl, {
-        headers: { apikey: apiKey, Authorization: `Bearer ${apiKey}`, Accept: 'application/json' },
-      });
-    } catch (e) {
-      throw new AppError(`Kaynak Supabase'e ulaşılamadı: ${e.message}`, 502);
-    }
-    if (!resp.ok) {
-      const body = await resp.text().catch(() => '');
-      throw new AppError(`Kaynak Supabase hatası (${resp.status}): ${body.slice(0, 200)}`, 502);
-    }
-    const remote = await resp.json();
-    if (!Array.isArray(remote)) throw new AppError('Kaynak Supabase beklenen ürün dizisini döndürmedi', 502);
-
-    // Kaynaktaki alan adlarını ana DB şemasına eşle (esnek isimlendirme)
-    const catalog = remote.map((r) => ({
-      sku:   r.marketplace_product_id ?? r.sku ?? r.id,
-      name:  r.name ?? r.title ?? 'İsimsiz ürün',
-      price: Number(r.price ?? r.sale_price ?? r.current_price ?? 0),
-      stock: Number(r.stock_quantity ?? r.stock ?? 0),
-      currency: r.currency ?? 'TRY',
-      barcode:  r.barcode ?? null,
-    })).filter((p) => p.sku);   // SKU'su olmayan kayıtları atla (upsert anahtarı)
-
-    let count = 0;
-    for (const p of catalog) {
-      await query(
-        `INSERT INTO products (user_id, integration_id, name, marketplace_product_id, barcode, price, stock_quantity, currency, is_active)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
-         ON CONFLICT (marketplace_product_id)
-         DO UPDATE SET name = EXCLUDED.name, barcode = EXCLUDED.barcode,
-                       price = EXCLUDED.price, stock_quantity = EXCLUDED.stock_quantity,
-                       integration_id = EXCLUDED.integration_id, is_active = true, updated_at = now()`,
-        [req.user.id, id, p.name, String(p.sku), p.barcode, p.price, p.stock, p.currency]
-      );
-      count++;
-    }
-    // Hem envanter (Mehmet) hem rakip-takibi ürün listesi (Hamza) cache'ini temizle
-    await invalidateCache(`inventory:${req.user.id}`, `products:${req.user.id}`);
-    res.status(200).json({ message: 'Ürün listesi senkronize edildi', count, marketplace: mp, source: catalogUrl });
+    const result = await runIntegrationSync(req.user.id, id);
+    res.status(200).json({ message: 'Ürün listesi senkronize edildi', ...result });
   } catch (err) {
     next(err);
   }
