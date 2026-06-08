@@ -28,6 +28,11 @@ async function processSyncJob(jobPayload) {
     return count;
   }
 
+  // Nurullah #28: Alarm kuralı oluşturulunca değerlendirme + bildirim üretimi
+  if (jobPayload?.type === 'alert_check') {
+    return processAlertCheck(jobPayload);
+  }
+
   // Varsayılan: rakip fiyat senkronu (eski davranış)
   console.log('\n🔄 [Worker] Sync job başladı:', jobPayload);
 
@@ -51,6 +56,44 @@ async function processSyncJob(jobPayload) {
   }
   console.log(`✅ [Worker] Sync job tamamlandı — ${syncCount} rakip güncellendi\n`);
   return syncCount;
+}
+
+// ── Alarm kuralı değerlendirme (Nurullah #28) ────────────────────────────
+async function processAlertCheck({ ruleId, userId }) {
+  console.log(`\n🔔 [Worker] Alarm kuralı değerlendiriliyor: ${ruleId}`);
+  const { rows } = await query(
+    'SELECT * FROM alert_rules WHERE id = $1 AND user_id = $2',
+    [ruleId, userId]
+  );
+  const rule = rows[0];
+  if (!rule) {
+    console.warn(`   ⚠️ Kural bulunamadı: ${ruleId}`);
+    return 0;
+  }
+
+  let title, message, type;
+  if (rule.condition_type === 'stok_azalmasi') {
+    // Eşiğin altında stoğu olan aktif ürünleri say
+    const { rows: r } = await query(
+      'SELECT count(*)::int AS n FROM products WHERE user_id = $1 AND is_active = true AND stock_quantity < $2::numeric',
+      [userId, rule.threshold_value]
+    );
+    const n = r[0].n;
+    title = 'Stok Azalması Uyarısı';
+    message = `"${rule.rule_name}" kuralı: stoğu ${rule.threshold_value} altında ${n} ürün bulundu.`;
+    type = n > 0 ? 'warning' : 'success';
+  } else {
+    title = 'Alarm Kuralı Aktif';
+    message = `"${rule.rule_name}" kuralı oluşturuldu (${rule.condition_type}, eşik ${rule.threshold_value}${rule.threshold_unit === 'percent' ? '%' : ''}) ve izlemeye alındı.`;
+    type = 'info';
+  }
+
+  await query(
+    'INSERT INTO notifications (user_id, title, message, type) VALUES ($1, $2, $3, $4)',
+    [userId, title, message, type]
+  );
+  console.log(`   ✅ Bildirim üretildi: ${title}\n`);
+  return 1;
 }
 
 // ── RabbitMQ Consumer (retry'li) ─────────────────────────────────────────

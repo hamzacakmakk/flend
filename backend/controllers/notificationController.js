@@ -5,6 +5,7 @@
 // ==========================================================================
 import { query } from '../db/pool.js';
 import { AppError } from '../middleware/errorHandler.js';
+import { sendSyncJob, isRabbitReady } from '../infra/rabbitmq.js';
 
 // 27. GET /api/notifications — Geçmiş bildirimleri listeleme
 export async function getAll(req, res, next) {
@@ -38,7 +39,21 @@ export async function createAlertRule(req, res, next) {
        VALUES ($1, $2, $3, $4, $5, $6, true) RETURNING *`,
       [req.user.id, rule_name, condition_type, threshold_value, threshold_unit, notify_via]
     );
-    res.status(201).json(rows[0]);
+    const rule = rows[0];
+
+    // Kural oluşturulunca değerlendirmeyi RabbitMQ'ya bırak (async). Worker
+    // "alert_check" işini tüketip kuralı değerlendirir ve bildirim üretir.
+    let notifyQueued = false;
+    if (isRabbitReady()) {
+      notifyQueued = sendSyncJob({
+        type: 'alert_check',
+        ruleId: rule.id,
+        userId: req.user.id,
+        triggeredAt: new Date().toISOString(),
+      });
+    }
+
+    res.status(201).json({ ...rule, notifyQueued });
   } catch (err) {
     next(err);
   }
