@@ -1,0 +1,16 @@
+# ==========================================================================
+# docker-compose.ci.yml — Jenkins (socket-mount) içinden deploy için override.
+#
+# Jenkins, host'un Docker daemon'ına konuşur ama kendi iç dosya yollarını
+# daemon çözemez. Bu override, Postgres init bind-mount'larını HOST mutlak
+# yoluna (${HOST_FLEND_DIR}) sabitler. Aynı container path (target) olduğundan
+# ana dosyadaki göreli mount'ların yerine geçer.
+#
+# Kullanım (Jenkinsfile içinde):
+#   docker compose -f docker-compose.yml -f docker-compose.ci.yml --profile full up -d
+# ==========================================================================
+services:
+  postgres:
+    volumes:
+      - ${HOST_FLEND_DIR}/backend/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ${HOST_FLEND_DIR}/backend/db/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro

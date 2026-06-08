@@ -1,0 +1,33 @@
+# ==========================================================================
+# jenkins/docker-compose.yml — Jenkins controller'ı Docker'da çalıştırır.
+#
+# Başlatma:
+#   cd jenkins
+#   docker compose up -d --build
+#   # ilk parola:  docker exec flend_jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+#   # arayüz:      http://localhost:8080
+#
+# HOST_FLEND_DIR .env'den okunur (bu klasördeki .env dosyasına bakın).
+# ==========================================================================
+services:
+  jenkins:
+    build: .
+    image: flend-jenkins
+    container_name: flend_jenkins
+    user: root                       # host docker.sock erişimi (Docker Desktop)
+    restart: unless-stopped
+    ports:
+      - "8080:8080"                  # Web arayüzü
+      - "50000:50000"                # agent bağlantısı (opsiyonel)
+    environment:
+      # App stack'iyle AYNI compose projesini yönetsin → aynı container/volume'lar,
+      # mevcut pg_data (demo veriler) korunur, init script'leri tekrar çalışmaz.
+      COMPOSE_PROJECT_NAME: flend
+      # Postgres init bind-mount'ları için HOST mutlak yolu (docker-compose.ci.yml kullanır)
+      HOST_FLEND_DIR: ${HOST_FLEND_DIR}
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - //var/run/docker.sock:/var/run/docker.sock   # Windows Docker Desktop socket
+
+volumes:
+  jenkins_home:
