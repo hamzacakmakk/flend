@@ -8,7 +8,7 @@ import {
   listIntegrations, addIntegration, updateIntegration, deleteIntegration, syncIntegration, Integration,
 } from '../lib/api';
 import { colors } from '../lib/theme';
-import { ScreenHeader, Card, FormInput, PrimaryButton, Badge, EmptyState } from '../components/ui';
+import { ScreenHeader, Card, FormInput, PrimaryButton, SecondaryButton, Badge, EmptyState } from '../components/ui';
 
 export default function IntegrationsScreen() {
   const router = useRouter();
@@ -18,6 +18,13 @@ export default function IntegrationsScreen() {
   const [apiSecret, setApiSecret] = useState('');
   const [adding, setAdding] = useState(false);
   const [syncingId, setSyncingId] = useState<string | null>(null);
+  // Düzenleme durumu (satır-içi form)
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [eName, setEName] = useState('');
+  const [eApiKey, setEApiKey] = useState('');
+  const [eApiSecret, setEApiSecret] = useState('');
+  const [eBaseUrl, setEBaseUrl] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     try { setItems(await listIntegrations()); } catch { /* yoksay */ }
@@ -60,6 +67,35 @@ export default function IntegrationsScreen() {
     }
   };
 
+  const startEdit = (it: Integration) => {
+    setEditingId(it.id);
+    setEName(it.marketplace_name || '');
+    setEApiKey(it.api_key || '');
+    setEApiSecret(it.api_secret || '');
+    setEBaseUrl(it.base_url || '');
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
+  const saveEdit = async (it: Integration) => {
+    if (!eName.trim()) { Alert.alert('Hata', 'Pazaryeri adı zorunludur.'); return; }
+    setSaving(true);
+    try {
+      await updateIntegration(it.id, {
+        marketplace_name: eName.trim(),
+        api_key: eApiKey.trim(),
+        api_secret: eApiSecret.trim(),
+        base_url: eBaseUrl.trim(),
+      });
+      setEditingId(null);
+      await load();
+    } catch (e: any) {
+      Alert.alert('Hata', e?.message || 'Güncellenemedi.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const remove = (it: Integration) => {
     Alert.alert('Sil', `${it.marketplace_name} entegrasyonu silinsin mi?`, [
       { text: 'Vazgeç', style: 'cancel' },
@@ -86,25 +122,45 @@ export default function IntegrationsScreen() {
         ) : (
           items.map((it) => (
             <Card key={it.id} style={{ marginBottom: 12 }}>
-              <View style={styles.itemHead}>
-                <Text style={styles.mpName}>{it.marketplace_name}</Text>
-                <Badge text={it.status === 'active' ? 'Aktif' : 'Pasif'} color={it.status === 'active' ? colors.success : colors.faint} bg={(it.status === 'active' ? colors.success : colors.faint) + '18'} />
-              </View>
-              <Text style={styles.url} numberOfLines={1}>{it.base_url}</Text>
-              <View style={styles.actions}>
-                <TouchableOpacity style={styles.actionBtn} onPress={() => sync(it)} disabled={syncingId === it.id}>
-                  {syncingId === it.id ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="sync-outline" size={16} color={colors.primary} />}
-                  <Text style={styles.actionText}>Ürün Çek</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionBtn} onPress={() => toggleStatus(it)}>
-                  <Ionicons name="swap-horizontal-outline" size={16} color={colors.accent} />
-                  <Text style={[styles.actionText, { color: colors.accent }]}>Durum</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionBtn} onPress={() => remove(it)}>
-                  <Ionicons name="trash-outline" size={16} color={colors.danger} />
-                  <Text style={[styles.actionText, { color: colors.danger }]}>Sil</Text>
-                </TouchableOpacity>
-              </View>
+              {editingId === it.id ? (
+                /* 11. Düzenleme formu */
+                <>
+                  <Text style={styles.cardTitle}>Entegrasyonu Düzenle</Text>
+                  <FormInput label="Pazaryeri Adı" value={eName} onChangeText={setEName} placeholder="Trendyol / Hepsiburada / Amazon" />
+                  <FormInput label="API Key" value={eApiKey} onChangeText={setEApiKey} placeholder="API anahtarı" autoCapitalize="none" />
+                  <FormInput label="API Secret (opsiyonel)" value={eApiSecret} onChangeText={setEApiSecret} placeholder="Gizli anahtar" autoCapitalize="none" />
+                  <FormInput label="Base URL (opsiyonel)" value={eBaseUrl} onChangeText={setEBaseUrl} placeholder="Boş bırakılırsa API Key'den türetilir" autoCapitalize="none" />
+                  <PrimaryButton title="Kaydet" onPress={() => saveEdit(it)} loading={saving} icon="checkmark-circle-outline" />
+                  <View style={{ height: 8 }} />
+                  <SecondaryButton title="Vazgeç" onPress={cancelEdit} />
+                </>
+              ) : (
+                <>
+                  <View style={styles.itemHead}>
+                    <Text style={styles.mpName}>{it.marketplace_name}</Text>
+                    <Badge text={it.status === 'active' ? 'Aktif' : 'Pasif'} color={it.status === 'active' ? colors.success : colors.faint} bg={(it.status === 'active' ? colors.success : colors.faint) + '18'} />
+                  </View>
+                  <Text style={styles.url} numberOfLines={1}>{it.base_url || 'URL: API Key\'den türetilecek'}</Text>
+                  <View style={styles.actions}>
+                    <TouchableOpacity style={styles.actionBtn} onPress={() => sync(it)} disabled={syncingId === it.id}>
+                      {syncingId === it.id ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="sync-outline" size={16} color={colors.primary} />}
+                      <Text style={styles.actionText}>Ürün Çek</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.actionBtn} onPress={() => startEdit(it)}>
+                      <Ionicons name="create-outline" size={16} color={colors.accent} />
+                      <Text style={[styles.actionText, { color: colors.accent }]}>Düzenle</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.actionBtn} onPress={() => toggleStatus(it)}>
+                      <Ionicons name="swap-horizontal-outline" size={16} color={colors.accent} />
+                      <Text style={[styles.actionText, { color: colors.accent }]}>Durum</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.actionBtn} onPress={() => remove(it)}>
+                      <Ionicons name="trash-outline" size={16} color={colors.danger} />
+                      <Text style={[styles.actionText, { color: colors.danger }]}>Sil</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
             </Card>
           ))
         )}
