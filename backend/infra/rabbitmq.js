@@ -10,19 +10,39 @@ const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://localhost';
 export const SYNC_QUEUE = process.env.RABBITMQ_SYNC_QUEUE || 'sync_jobs';
 
 let channel = null;
+let connecting = false;
 
+// RabbitMQ'ya bağlanmayı dener; başarısızsa arka planda tekrar dener.
+// Böylece API, RabbitMQ'dan önce başlasa bile (startup race) hazır olunca
+// kendiliğinden bağlanır ve kalıcı senkron-fallback'e takılı kalmaz.
 export async function initRabbit() {
+  if (connecting) return;
+  connecting = true;
   try {
     const conn = await amqplib.connect(RABBITMQ_URL);
     channel = await conn.createChannel();
     await channel.assertQueue(SYNC_QUEUE, { durable: true });
+    // Bağlantı kopar/hata verirse kanalı sıfırla ve yeniden bağlanmayı tetikle.
     conn.on('error', () => { channel = null; });
-    conn.on('close', () => { channel = null; });
+    conn.on('close', () => {
+      channel = null;
+      console.warn('⚠️  RabbitMQ bağlantısı kapandı — yeniden bağlanılacak');
+      scheduleReconnect();
+    });
     console.log(`✅ RabbitMQ bağlantısı kuruldu — Queue: "${SYNC_QUEUE}"`);
   } catch (err) {
-    console.warn('⚠️  RabbitMQ bağlanamadı — async sync devre dışı:', err.message);
     channel = null;
+    console.warn('⚠️  RabbitMQ bağlanamadı, 5sn sonra tekrar denenecek:', err.message);
+    connecting = false;
+    scheduleReconnect();
+    return;
   }
+  connecting = false;
+}
+
+function scheduleReconnect() {
+  if (connecting || channel) return;
+  setTimeout(() => { initRabbit(); }, 5000).unref?.();
 }
 
 export function isRabbitReady() {
